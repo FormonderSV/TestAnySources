@@ -23,7 +23,7 @@ add_subdirectory(external/googletest/googletest)
 file(GLOB_RECURSE SOURCES "src/modules/*.cpp")
 
 # Test files (excluding main test runner)
-file(GLOB_RECURSE TEST_SOURCES "tests/units/*.cpp" "src/modules/*.cpp")
+file(GLOB_RECURSE TEST_SOURCES "tests/unit/*.cpp" "src/modules/*.cpp")
 
 # Main Executable
 add_executable(${This} ${SOURCES} src/main.cpp)
