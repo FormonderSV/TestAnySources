@@ -21,12 +21,13 @@ add_subdirectory(external/googletest/googletest)
 
 # Source files
 file(GLOB_RECURSE SOURCES "src/modules/*.cpp")
+file(GLOB_RECURSE HEADERS "include/modules/*.hpp")
 
 # Test files (excluding main test runner)
-file(GLOB_RECURSE TEST_SOURCES "tests/unit/*.cpp" "src/modules/*.cpp")
+file(GLOB_RECURSE TEST_SOURCES "tests/unit/*.cpp" ${SOURCES} ${HEADERS})
 
 # Main Executable
-add_executable(${This} ${SOURCES} src/main.cpp)
+add_executable(${This} ${SOURCES} ${HEADERS} src/main.cpp)
 # Link necessary libraries (like GoogleTest) to main project if necessary
 
 # Test Executable

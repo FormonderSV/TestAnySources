@@ -72,7 +72,9 @@ namespace vcore
     public:
         LongSymbolsNormalizer() = default;
 
-        explicit LongSymbolsNormalizer(const LongSymbols_t& long_symbols);
+        explicit LongSymbolsNormalizer(const LongSymbols_t& long_symbols, bool use_random = false);
+
+        explicit LongSymbolsNormalizer(const LongSymbols_t& long_symbols, const VCORE_Reels::Reel_t& replace_symbols, bool use_random = false);
 
         // Modify Reels
         VCORE_Reels GetModifiedReels(const VCORE_Reels& original_reels) const;
@@ -80,6 +82,10 @@ namespace vcore
         VCORE_Reels::Matrix_t GetModifiedMatrix(const VCORE_Reels::Matrix_t& original_matrix) const;
 
         VCORE_Reels::Reel_t GetModifiedReel(const VCORE_Reels::Reel_t& original_reel) const;
+
+        VCORE_Reels::Reel_t GetModifiedContents(const VCORE_Reels::Reel_t& reel_contents) const;
+
+        VCORE_Reels::Reel_t GetModifiedRolling(const VCORE_Reels::Reel_t& original_reel, const VCORE_Reels::Reel_t& reel_contents) const;
 
         // Restore original reels
         VCORE_Reels GetOriginalReels(const VCORE_Reels& modified_reels) const;
@@ -91,7 +97,11 @@ namespace vcore
         // Other data
         void SetLongSymbols(const LongSymbols_t& long_symbols);
 
+        void SetSymbolsForReplace(const VCORE_Reels::Reel_t& replace_symbols);
+
         const LongSymbols_t& GetLongSymbols() const;
+
+        const VCORE_Reels::Reel_t& GetReplaceSymbols() const;
 
         VCORE_Game::Figures_t GetAdditionalPayTableSymbols(const VCORE_Game::Figures_t& current_symbols) const;
 
@@ -99,6 +109,8 @@ namespace vcore
         VCORE_Reels::Reel_t GenerateRandomReel(int symbol_id, size_t new_size) const;
 
         bool IsNextSymbolSame(const VCORE_Reels::Reel_t& reel, size_t pos) const;
+
+        bool IsNextPartOfSymbol(const VCORE_Reels::Reel_t& reel, size_t pos) const;
 
         size_t GetSymbolLength(const VCORE_Reels::Reel_t& reel, size_t startPos) const;
 
@@ -108,12 +120,20 @@ namespace vcore
 
         bool IsLongSymbol(VCORE_Figure::Identity_t symbol_id) const;
 
+        bool IsCompleteSymbol(VCORE_Figure::Identity_t symbol_id, size_t length) const;
+
         bool IsPartOfLongSymbol(VCORE_Figure::Identity_t symbol_id) const;
 
         VCORE_Figure::Identity_t GetOriginalSymbolId(VCORE_Figure::Identity_t modified_symbol_id) const;
 
+        std::pair<bool, VCORE_Figure::Identity_t> FindLongSymbolId(VCORE_Figure::Identity_t symbol_id) const;
+
+        bool IsEqualAllId(const VCORE_Reels::Reel_t& original_reel) const;
+
     private:
         LongSymbols_t m_long_symbols;
+        VCORE_Reels::Reel_t m_replace_symbols;
+        bool m_use_random{ false };
         static constexpr int DEFAULT_REEL_VALUE = -1;
     };
 }

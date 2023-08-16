@@ -1,12 +1,6 @@
 @echo off
 setlocal enabledelayedexpansion
 
-REM Create a build directory
-if not exist build (
-    mkdir build
-)
-cd build
-
 REM Give the user a choice of generator
 :choice
 cls
@@ -21,6 +15,12 @@ set /p choice="Enter your choice (default is 1): "
 
 REM If no input, default to Visual Studio 17 2022
 if "!userChoice!"=="" set userChoice=1
+
+REM Create a build directory
+if not exist build (
+    mkdir build
+)
+cd build
 
 REM Generate project files based on user selection
 set GENERATOR_NAME=Visual Studio 17 2022
