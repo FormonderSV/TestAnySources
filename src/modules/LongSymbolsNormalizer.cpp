@@ -61,35 +61,112 @@ VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedReel(const VCORE_Reels::Re
 
 VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedContents(const VCORE_Reels::Reel_t& reel) const
 {
-    VCORE_Reels::Reel_t new_reel = reel;
-
-    for (size_t symbol_pos = 0; symbol_pos < reel.size(); ++symbol_pos)
+    if (IsEqualAllId(reel))
     {
-        const auto original_symbol = reel[symbol_pos];
-        const auto found_long_symbol_id = FindLongSymbolId(original_symbol);
-        if (found_long_symbol_id.first)
-        {
-            const size_t symbol_length = GetSymbolLength(reel, symbol_pos);
-            const auto long_symbols = m_long_symbols.at(found_long_symbol_id.second);
-            if(symbol_length == long_symbols.size())
-            {
-                continue;
-            }
+        const auto original_reel = GetOriginalReel(reel);
+        return GenerateRandomReel(original_reel.front(), original_reel.size());
+    }
 
-            const size_t start_index = std::min<size_t>(long_symbols.size(), std::distance(long_symbols.begin(), std::find(long_symbols.begin(), long_symbols.end(), original_symbol)));
+    auto new_reel = reel;
 
-            if (symbol_pos == 1 && start_index > 0)
-            {
-                new_reel[symbol_pos - 1] = long_symbols.at(start_index - 1);
-            }
-            else if (symbol_pos == reel.size() - 2 && start_index < long_symbols.size() - 1)
-            {
-                new_reel[symbol_pos + 1] = long_symbols.at(start_index + 1);
-            }
-        }
+    for (size_t symbol_pos = 0; symbol_pos < new_reel.size(); ++symbol_pos)
+    {
+        HandleSymbolModification(new_reel, symbol_pos);
     }
 
     return new_reel;
+}
+
+void LongSymbolsNormalizer::HandleSymbolModification(VCORE_Reels::Reel_t& new_reel, size_t symbol_pos) const
+{
+    const auto long_symbols = GetLongSymbol(new_reel[symbol_pos]);
+    UpdateReelWithLongSymbols(new_reel, long_symbols, symbol_pos);
+}
+
+void LongSymbolsNormalizer::UpdateReelWithLongSymbols(VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& long_symbols, size_t symbol_pos) const
+{
+    if (symbol_pos == 0 && symbol_pos + 1 < reel.size())
+    {
+        const auto long_next_symbol = GetLongSymbol(reel[symbol_pos + 1]);
+        if (long_symbols.empty() && long_next_symbol.empty())
+        {
+            return;
+        }
+
+        const size_t symbol_length = GetSymbolLength(reel, symbol_pos + 1);
+        if (!long_next_symbol.empty() && long_next_symbol.size() == symbol_length)
+        {
+            if (!long_symbols.empty())
+            {
+                reel[symbol_pos] = long_symbols.at(long_symbols.size() - 1);
+            }
+        }
+        else if(!long_next_symbol.empty() && long_next_symbol.size() != symbol_length)
+        {
+            const size_t index = std::distance(long_next_symbol.begin(), std::find(long_next_symbol.begin(), long_next_symbol.end(), reel[symbol_pos + 1]));
+            reel[symbol_pos] = long_next_symbol.at(index == 0 ? long_next_symbol.size() - 1 : index - 1);
+        }
+        else if (long_symbols.empty() && !long_next_symbol.empty())
+        {
+            const size_t index = std::distance(long_next_symbol.begin(), std::find(long_next_symbol.begin(), long_next_symbol.end(), reel[symbol_pos + 1]));
+            reel[symbol_pos] = long_next_symbol.at(index == 0 ? long_next_symbol.size() - 1 : index - 1);
+        }
+        else if (long_symbols == long_next_symbol)
+        {
+            const size_t index = std::distance(long_symbols.begin(), std::find(long_symbols.begin(), long_symbols.end(), reel[symbol_pos + 1]));
+            reel[symbol_pos] = long_symbols.at(index == 0 ? long_symbols.size() - 1 : index - 1);
+        }
+        else if (!long_symbols.empty())
+        {
+            reel[symbol_pos] = long_symbols.at(long_symbols.size() - 1);
+        }
+    }
+    else if (symbol_pos == reel.size() - 1 && symbol_pos - 1 > 0)
+    {
+        const auto long_prev_symbol = GetLongSymbol(reel[symbol_pos - 1]);
+        if (long_symbols.empty() && long_prev_symbol.empty())
+        {
+            return;
+        }
+
+        const size_t symbol_length = GetPrevSymbolLength(reel, symbol_pos - 1);
+        if (!long_prev_symbol.empty() && long_prev_symbol.size() == symbol_length)
+        {
+            if (!long_symbols.empty())
+            {
+                reel[symbol_pos] = long_symbols.at(0);
+            }
+        }
+        else if (!long_prev_symbol.empty() && long_prev_symbol.size() != symbol_length)
+        {
+            const size_t index = std::distance(long_prev_symbol.begin(), std::find(long_prev_symbol.begin(), long_prev_symbol.end(), reel[symbol_pos - 1]));
+            reel[symbol_pos] = long_prev_symbol.at(index == long_prev_symbol.size() - 1 ? 0 : index + 1);
+        }
+        else if (long_symbols.empty() && !long_prev_symbol.empty())
+        {
+            const size_t index = std::distance(long_prev_symbol.begin(), std::find(long_prev_symbol.begin(), long_prev_symbol.end(), reel[symbol_pos - 1]));
+            reel[symbol_pos] = long_prev_symbol.at(index == long_prev_symbol.size() - 1 ? 0 : index + 1);
+        }
+        else if (long_symbols == long_prev_symbol)
+        {
+            const size_t index = std::distance(long_symbols.begin(), std::find(long_symbols.begin(), long_symbols.end(), reel[symbol_pos - 1]));
+            reel[symbol_pos] = long_symbols.at(index == long_symbols.size() - 1 ? 0 : index + 1);
+        }
+        else if (!long_symbols.empty())
+        {
+            reel[symbol_pos] = long_symbols.at(0);
+        }
+    }
+
+    // else if(symbol_pos == reel.size() - 1)
+    // {
+    //     if (IsPartOfLongSymbol(reel[symbol_pos]))
+    //     {
+    //         const auto found_long_symbol_id = FindLongSymbolId(reel[symbol_pos]);
+    //         const auto new_long_symbols = m_long_symbols.at(found_long_symbol_id.second);
+    //         reel[symbol_pos] = new_long_symbols.at(0);
+    //     }
+    // }
 }
 
 VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedRolling(const VCORE_Reels::Reel_t& original_reel, const VCORE_Reels::Reel_t& reel_contents) const
@@ -196,6 +273,24 @@ VCORE_Game::Figures_t LongSymbolsNormalizer::GetAdditionalPayTableSymbols(const 
     return additional_symbols;
 }
 
+bool LongSymbolsNormalizer::IsPartOfLongSymbol(VCORE_Figure::Identity_t symbol_id) const
+{
+    return FindLongSymbolId(symbol_id).first;
+}
+
+VCORE_Reels::Reel_t LongSymbolsNormalizer::GetLongSymbol(VCORE_Figure::Identity_t symbol_id) const
+{
+    for (const auto& pair : m_long_symbols)
+    {
+        if (symbol_id == pair.first || std::find(pair.second.begin(), pair.second.end(), symbol_id) != pair.second.end())
+        {
+            return pair.second;
+        }
+    }
+
+    return { };
+}
+
 VCORE_Reels::Reel_t LongSymbolsNormalizer::GenerateRandomReel(int symbol_id, size_t new_size) const
 {
     std::vector<int> new_reel(new_size, DEFAULT_REEL_VALUE);
@@ -230,6 +325,11 @@ bool LongSymbolsNormalizer::IsNextSymbolSame(const VCORE_Reels::Reel_t& reel, si
     return pos + 1 < reel.size() && reel[pos] == reel[pos + 1];
 }
 
+bool LongSymbolsNormalizer::IsPrevSymbolSame(const VCORE_Reels::Reel_t& reel, size_t pos) const
+{
+    return pos > 0 && reel[pos] == reel[pos - 1];
+}
+
 bool LongSymbolsNormalizer::IsNextPartOfSymbol(const VCORE_Reels::Reel_t& reel, size_t pos) const
 {
     if (pos + 1 >= reel.size())
@@ -256,6 +356,33 @@ bool LongSymbolsNormalizer::IsNextPartOfSymbol(const VCORE_Reels::Reel_t& reel, 
     return false;
 }
 
+bool LongSymbolsNormalizer::IsPrevPartOfSymbol(const VCORE_Reels::Reel_t& reel, size_t pos) const
+{
+    if (pos == 0)
+    {
+        return false;
+    }
+
+    for (const auto& pair : m_long_symbols)
+    {
+        const auto& long_symbol = pair.second;
+        const auto current_symbol_it = std::find(long_symbol.begin(), long_symbol.end(), reel[pos]);
+        if (current_symbol_it != long_symbol.end())
+        {
+            const auto prev_symbol_it = std::find(long_symbol.begin(), long_symbol.end(), reel[pos - 1]);
+            if (prev_symbol_it != long_symbol.end())
+            {
+                return prev_symbol_it < current_symbol_it;
+            }
+
+            return false;
+        }
+    }
+
+    return false;
+}
+
+
 size_t LongSymbolsNormalizer::GetSymbolLength(const VCORE_Reels::Reel_t& reel, size_t start_pos) const
 {
     size_t length = 1;
@@ -263,6 +390,17 @@ size_t LongSymbolsNormalizer::GetSymbolLength(const VCORE_Reels::Reel_t& reel, s
     {
         ++length;
         ++start_pos;
+    }
+    return length;
+}
+
+size_t LongSymbolsNormalizer::GetPrevSymbolLength(const VCORE_Reels::Reel_t& reel, size_t start_pos) const
+{
+    size_t length = 1;
+    while (IsPrevSymbolSame(reel, start_pos) || IsPrevPartOfSymbol(reel, start_pos))
+    {
+        ++length;
+        --start_pos;
     }
     return length;
 }
@@ -320,11 +458,6 @@ bool LongSymbolsNormalizer::IsCompleteSymbol(VCORE_Figure::Identity_t symbol_id,
     return false;
 }
 
-bool LongSymbolsNormalizer::IsPartOfLongSymbol(VCORE_Figure::Identity_t symbol_id) const
-{
-    return FindLongSymbolId(symbol_id).first;
-}
-
 VCORE_Figure::Identity_t LongSymbolsNormalizer::GetOriginalSymbolId(VCORE_Figure::Identity_t modified_symbol_id) const
 {
     const auto result = FindLongSymbolId(modified_symbol_id);
@@ -344,12 +477,13 @@ std::pair<bool, VCORE_Figure::Identity_t> LongSymbolsNormalizer::FindLongSymbolI
     return { false, {} };
 }
 
-bool LongSymbolsNormalizer::IsEqualAllId(const VCORE_Reels::Reel_t& original_reel) const
+bool LongSymbolsNormalizer::IsEqualAllId(const VCORE_Reels::Reel_t& reel) const
 {
-    if (original_reel.empty())
+    if (reel.empty())
     {
         return true;
     }
 
+    const auto original_reel = GetOriginalReel(reel);
     return std::all_of(cbegin(original_reel), cend(original_reel), [first_symbol_id = original_reel.front()](int symbol_id) { return symbol_id == first_symbol_id; });
 }
