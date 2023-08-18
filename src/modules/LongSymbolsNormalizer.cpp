@@ -195,7 +195,7 @@ VCORE_Reels::Reel_t LongSymbolsNormalizer::GetOriginalReel(const VCORE_Reels::Re
 
     for (auto& symbol_id : new_reel)
     {
-        if (IsPartOfLongSymbol(symbol_id))
+        if (IsSymbolPartOfLongSymbol(symbol_id))
         {
             symbol_id = GetOriginalSymbolId(symbol_id);
         }
@@ -263,9 +263,16 @@ VCORE_Game::Figures_t LongSymbolsNormalizer::GetAdditionalPayTableSymbols(const 
     return additional_symbols;
 }
 
-bool LongSymbolsNormalizer::IsPartOfLongSymbol(VCORE_Figure::Identity_t symbol_id) const
+bool LongSymbolsNormalizer::IsSymbolPartOfLongSymbol(VCORE_Figure::Identity_t symbol_id) const
 {
-    return FindLongSymbolId(symbol_id).first;
+    for (const auto& pair : m_long_symbols) 
+    {
+        if (std::find(pair.second.begin(), pair.second.end(), symbol_id) != pair.second.end()) 
+        {
+            return true;
+        }
+    }
+    return false;
 }
 
 VCORE_Reels::Reel_t LongSymbolsNormalizer::GetLongSymbol(VCORE_Figure::Identity_t symbol_id) const
@@ -329,10 +336,12 @@ bool LongSymbolsNormalizer::IsAdjacentSymbolPartOfSameLongSymbol(const VCORE_Ree
         return false;
 
     const auto adjacent_pos = pos + direction;
-    for (const auto& pair : m_long_symbols) {
+    for (const auto& pair : m_long_symbols) 
+    {
         const auto& long_symbol = pair.second;
         const auto current_symbol_it = std::find(long_symbol.begin(), long_symbol.end(), reel[pos]);
-        if (current_symbol_it != long_symbol.end()) {
+        if (current_symbol_it != long_symbol.end()) 
+        {
             const auto adj_symbol_it = std::find(long_symbol.begin(), long_symbol.end(), reel[adjacent_pos]);
             return adj_symbol_it != long_symbol.end() && (adj_symbol_it - current_symbol_it) == direction;
         }
@@ -391,7 +400,7 @@ VCORE_Reels::Reel_t LongSymbolsNormalizer::GenerateReelWithLongSymbols(const VCO
 bool LongSymbolsNormalizer::HasLongSymbolOnReel(const VCORE_Reels::Reel_t& reel) const
 {
     return std::any_of(cbegin(reel), cend(reel), [&](auto symbol_id) {
-        return IsLongSymbol(symbol_id) || IsPartOfLongSymbol(symbol_id);
+        return IsLongSymbol(symbol_id) || IsSymbolPartOfLongSymbol(symbol_id);
         });
 }
 
@@ -417,21 +426,14 @@ bool LongSymbolsNormalizer::IsCompleteSymbol(VCORE_Figure::Identity_t symbol_id,
 
 VCORE_Figure::Identity_t LongSymbolsNormalizer::GetOriginalSymbolId(VCORE_Figure::Identity_t modified_symbol_id) const
 {
-    const auto result = FindLongSymbolId(modified_symbol_id);
-    return result.first ? result.second : modified_symbol_id;
-}
-
-std::pair<bool, VCORE_Figure::Identity_t> LongSymbolsNormalizer::FindLongSymbolId(VCORE_Figure::Identity_t symbol_id) const
-{
-    for (const auto& pair : m_long_symbols)
+    for (const auto& pair : m_long_symbols) 
     {
-        if (std::find(pair.second.begin(), pair.second.end(), symbol_id) != pair.second.end())
+        if (std::find(pair.second.begin(), pair.second.end(), modified_symbol_id) != pair.second.end()) 
         {
-            return { true, pair.first };
+            return pair.first;
         }
     }
-
-    return { false, {} };
+    return modified_symbol_id;
 }
 
 bool LongSymbolsNormalizer::IsEqualAllId(const VCORE_Reels::Reel_t& reel) const

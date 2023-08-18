@@ -110,7 +110,7 @@ namespace vcore
 
         VCORE_Game::Figures_t GetAdditionalPayTableSymbols(const VCORE_Game::Figures_t& current_symbols) const;
 
-        bool IsPartOfLongSymbol(VCORE_Figure::Identity_t symbol_id) const;
+        bool IsSymbolPartOfLongSymbol(VCORE_Figure::Identity_t symbol_id) const;
 
         VCORE_Reels::Reel_t GetLongSymbol(VCORE_Figure::Identity_t symbol_id) const;
 
@@ -137,8 +137,6 @@ namespace vcore
         bool IsCompleteSymbol(VCORE_Figure::Identity_t symbol_id, size_t length) const;
 
         VCORE_Figure::Identity_t GetOriginalSymbolId(VCORE_Figure::Identity_t modified_symbol_id) const;
-
-        std::pair<bool, VCORE_Figure::Identity_t> FindLongSymbolId(VCORE_Figure::Identity_t symbol_id) const;
 
         bool IsEqualAllId(const VCORE_Reels::Reel_t& reel) const;
 
