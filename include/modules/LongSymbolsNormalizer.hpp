@@ -122,9 +122,7 @@ namespace vcore
 
         bool IsPrevSymbolSame(const VCORE_Reels::Reel_t& reel, size_t pos) const;
 
-        bool IsNextPartOfSymbol(const VCORE_Reels::Reel_t& reel, size_t pos) const;
-
-        bool IsPrevPartOfSymbol(const VCORE_Reels::Reel_t& reel, size_t pos) const;
+        bool IsAdjacentSymbolPartOfSameLongSymbol(const VCORE_Reels::Reel_t& reel, size_t pos, int direction) const;
 
         size_t GetSymbolLength(const VCORE_Reels::Reel_t& reel, size_t start_pos) const;
 
@@ -148,6 +146,8 @@ namespace vcore
         LongSymbols_t m_long_symbols;
         VCORE_Reels::Reel_t m_replace_symbols;
         bool m_use_random{ false };
+        static constexpr int NEXT_SYMBOL = 1;
+        static constexpr int PREV_SYMBOL = -1;
         static constexpr int DEFAULT_REEL_VALUE = -1;
     };
 }
