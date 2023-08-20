@@ -106,7 +106,7 @@ namespace vcore
 
         void UpdateReelForOtherSymbols(VCORE_Reels::Reel_t& new_reel, const VCORE_Reels::Reel_t& reel, size_t& left_index, size_t right_index) const;
 
-        void ReplaceWithRandomSymbols(VCORE_Reels::Reel_t& new_reel, size_t& left_index, size_t right_index, size_t end_pos) const;
+        void ReplaceWithRandomSymbols(VCORE_Reels::Reel_t& new_reel, size_t& left_index, size_t right_index, size_t symbol_length) const;
 
         void ReplaceOrExtendLongSymbol(VCORE_Reels::Reel_t& new_reel, const VCORE_Reels::Reel_t& long_symbol, size_t& left_index, size_t right_index) const;
 

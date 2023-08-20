@@ -291,11 +291,11 @@ TEST(LongSymbolsNormalizerTest, GetModifiedFakeRollings)
     for (size_t i = 0; i < expected_fake_rolling.size(); ++i)
     {
         const auto modified_reel_contents = normalizer.GetModifiedFakeRolling(original_fake_rolling[i], current_contents[i]);
-        EXPECT_EQ(expected_fake_rolling[i], modified_reel_contents) << "\original_fake_rolling: " << VectorToString(original_fake_rolling[i]);
+        EXPECT_EQ(expected_fake_rolling[i], modified_reel_contents);
     }
 }
 
-TEST(LongSymbolsNormalizerTest, DISABLED_GetModifiedTrueRollings)
+TEST(LongSymbolsNormalizerTest, GetModifiedTrueRollings)
 {
     const LongSymbols_t long_symbols = {
       { 1, { 40, 41 } },
@@ -312,18 +312,27 @@ TEST(LongSymbolsNormalizerTest, DISABLED_GetModifiedTrueRollings)
     const LongSymbolsNormalizer normalizer(long_symbols, replace_id);
 
     const std::vector<VCORE_Reels::Reel_t> current_contents {
-        { 41, 48, 49, 50, 51, 8, 48, 49 },
-        { 51, 9, 10, 8, 9, 52, 53, 54 },
+        { 49, 50, 51, 52, 53, 54, 55, 9 },
+        { 53, 54, 55, 42, 43, 9, 8, 9 },
+        { 57, 58, 59, 44, 45, 9, 8, 9 },
+        { 13, 52, 53, 54, 55, 52, 53, 54 },
+        { 54, 55, 9, 42, 43, 9, 8, 9 },
     };
 
     const std::vector<VCORE_Reels::Reel_t> original_true_rolling {
-        { 40, 8, 48, 49, 50, 51, 48, 41, 52, 53, 9, 10, 11, 12 },
-        { 48, 52, 53, 54, 55, 8, 52, 49, 50, 51, 9, 10, 11, 12 },
+        { 49, 8, 48, 49, 50, 51, 48, 50, 9, 10, 11, 12, 13, 14 },
+        { 53, 52, 53, 54, 55, 8, 52, 54, 9, 10, 11, 12, 13, 14 },
+        { 57, 8, 10, 56, 57, 58, 59, 58, 9, 10, 11, 12, 13, 14 },
+        { 13, 54, 55, 44, 45, 9, 44, 52, 9, 10, 11, 12, 13, 14 },
+        { 54, 53, 54, 55, 44, 45, 40, 55, 9, 10, 11, 12, 13, 14 },
     };
 
     const std::vector<VCORE_Reels::Reel_t> expected_true_rolling {
-        { 41, 8, 48, 49, 50, 51, 48, 40, 41, 9, 9, 10, 11, 40 },
-        { 51, 52, 53, 54, 55, 8, 52, 53, 54, 55, 9, 48, 49, 50 },
+        { 51, 8, 48, 49, 50, 51, 48, 49, 50, 51, 11, 12, 13, 48 },
+        { 55, 52, 53, 54, 55, 8, 52, 53, 54, 55, 11, 12, 13, 52 },
+        { 59, 8, 10, 56, 57, 58, 59, 9, 9, 10, 11, 12, 13, 56 },
+        { 53, 54, 55, 44, 45, 9, 44, 45, 9, 10, 11, 12, 13, 14 },
+        { 52, 53, 54, 55, 44, 45, 40,41, 9, 10, 11, 12, 52, 53 },
     };
 
     EXPECT_EQ(original_true_rolling.size(), expected_true_rolling.size());
