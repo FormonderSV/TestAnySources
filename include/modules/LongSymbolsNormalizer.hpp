@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <vector>
 #include <list>
+#include <random>
 
 namespace vcore
 {
@@ -76,7 +77,7 @@ namespace vcore
     class LongSymbolsNormalizer
     {
     public:
-        LongSymbolsNormalizer() = default;
+        LongSymbolsNormalizer();
 
         explicit LongSymbolsNormalizer(const LongSymbols_t& long_symbols, bool use_random = false);
 
@@ -99,9 +100,9 @@ namespace vcore
 
         void UpdateReelWithLongSymbols(VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& long_symbols, size_t symbol_pos) const;
 
-        VCORE_Reels::Reel_t GetModifiedFakeRolling(const VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& reel_contents) const;
+        VCORE_Reels::Reel_t GetModifiedFakeRolling(const VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& current_contents) const;
 
-        VCORE_Reels::Reel_t GetModifiedTrueRolling(const VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& reel_contents) const;
+        VCORE_Reels::Reel_t GetModifiedTrueRolling(const VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& current_contents) const;
 
         // Restore original reels
         VCORE_Reels GetOriginalReels(const VCORE_Reels& modified_reels) const;
@@ -151,9 +152,16 @@ namespace vcore
 
         bool IsEqualAllId(const VCORE_Reels::Reel_t& reel) const;
 
+        VCORE_Figure::Identity_t GetRandomReplaceSymbol() const;
+
+        int GenerateRandomNumberWithinRange(size_t max_value) const;
+
     private:
+        mutable std::random_device m_rd;
+        mutable std::mt19937 m_gen;
+        mutable std::uniform_int_distribution<int> m_distributor;
         LongSymbols_t m_long_symbols;
-        VCORE_Reels::Reel_t m_replace_symbols;
+        VCORE_Reels::Reel_t m_replace_symbols{};
         bool m_use_random{ false };
         static constexpr int DEFAULT_REEL_VALUE = -1;
     };

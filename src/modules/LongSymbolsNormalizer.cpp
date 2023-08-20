@@ -1,21 +1,36 @@
 ﻿#include <modules/LongSymbolsNormalizer.hpp>
 #include <algorithm>
+#include <cassert>
 #include <random>
 
 using namespace vcore;
 
+LongSymbolsNormalizer::LongSymbolsNormalizer()
+    : m_rd{}
+    , m_gen{ m_rd() }
+    , m_distributor{ 0, std::numeric_limits<int>::max() }
+{
+
+}
+
 LongSymbolsNormalizer::LongSymbolsNormalizer(const LongSymbols_t& long_symbols, bool use_random)
-    : m_long_symbols{ long_symbols }
-    , m_replace_symbols({})
-    , m_use_random(use_random)
+    : m_rd{}
+    , m_gen{ m_rd() }
+    , m_distributor{ 0, std::numeric_limits<int>::max() }
+    , m_long_symbols{ long_symbols }
+    , m_replace_symbols{}
+    , m_use_random{ use_random }
 {
 
 }
 
 LongSymbolsNormalizer::LongSymbolsNormalizer(const LongSymbols_t& long_symbols, const VCORE_Reels::Reel_t& replace_symbols, bool use_random)
-    : m_long_symbols{ long_symbols }
-    , m_replace_symbols(replace_symbols)
-    , m_use_random(use_random)
+    : m_rd{}
+    , m_gen{ m_rd() }
+    , m_distributor{ 0, std::numeric_limits<int>::max() }
+    , m_long_symbols{ long_symbols }
+    , m_replace_symbols{ replace_symbols }
+    , m_use_random{ use_random }
 {
 
 }
@@ -152,19 +167,25 @@ void LongSymbolsNormalizer::UpdateReelWithLongSymbols(VCORE_Reels::Reel_t& reel,
     }
 }
 
-VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedFakeRolling(const VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& reel_contents) const
+VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedFakeRolling(const VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& current_contents) const
 {
-    // В данном коде сразу приходит модифицированная матрица, все длынные символы преобразованы в нужныее ID
-    // Данная роллинг матрица будет крутиться 
+    // В данном коде сразу приходит модифицированная матрица, все длынные символы преобразованы в нужные ID
+    // Данная роллинг матрица будет крутиться циклично начиная с последнего id до reel_contents.size(). Т.е. если длина роллинга 30 а reel_contents.size() == 6,
+    // то для роллинга будут использоватьcя ID с 29 по 7. reel.size() - reel_contents.size();
+    // Важно соблюдать цикличность в данном роллинге и не допустить разрыва длинных символов.
+    // При старте роллинга берётся первый символ с reel_contents и соединяется с последним символом reel
+    // reel_contents используется только вначале крутки, после прокрутки reel_contents.size() символов, reel_contents, более использоваться не будет.
+
+    auto left_index = current_contents.size();
+    auto current_figure_id = current_contents.front();
+
     VCORE_Reels::Reel_t new_reel = reel;
-    new_reel.insert(new_reel.end(), reel_contents.begin(), reel_contents.end());
     return new_reel;
 }
 
-VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedTrueRolling(const VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& reel_contents) const
+VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedTrueRolling(const VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& current_contents) const
 {
     VCORE_Reels::Reel_t new_reel = reel;
-    new_reel.insert(new_reel.end(), reel_contents.begin(), reel_contents.end());
     return new_reel;
 }
 
@@ -267,9 +288,9 @@ VCORE_Game::Figures_t LongSymbolsNormalizer::GetAdditionalPayTableSymbols(const 
 
 bool LongSymbolsNormalizer::IsSymbolPartOfLongSymbol(VCORE_Figure::Identity_t symbol_id) const
 {
-    for (const auto& pair : m_long_symbols) 
+    for (const auto& pair : m_long_symbols)
     {
-        if (std::find(pair.second.begin(), pair.second.end(), symbol_id) != pair.second.end()) 
+        if (std::find(pair.second.begin(), pair.second.end(), symbol_id) != pair.second.end())
         {
             return true;
         }
@@ -299,15 +320,7 @@ VCORE_Reels::Reel_t LongSymbolsNormalizer::GenerateRandomReel(int symbol_id, siz
     {
         const auto& long_symbol = long_symbol_it->second;
 
-        auto get_random_index = [&]
-        {
-            std::random_device rd;
-            std::mt19937 gen(rd());
-            std::uniform_int_distribution<> distributor(0, static_cast<int>(long_symbol.size() - 1));
-            return distributor(gen);
-        };
-
-        int random_index = m_use_random ? get_random_index() : 0;
+        int random_index = m_use_random ? GenerateRandomNumberWithinRange(long_symbol.size() - 1) : 0;
 
         for (int& i : new_reel)
         {
@@ -334,18 +347,18 @@ bool LongSymbolsNormalizer::IsAdjacentSymbolPartOfSameLongSymbol(const VCORE_Ree
     if (!(direction == Direction_t::LEFT || direction == Direction_t::RIGHT))
         return false;
 
-    if (direction == Direction_t::RIGHT && pos + 1 >= reel.size()) 
+    if (direction == Direction_t::RIGHT && pos + 1 >= reel.size())
         return false;
 
     if (direction == Direction_t::LEFT && pos == 0)
         return false;
 
     const auto adjacent_pos = pos + static_cast<int>(direction);
-    for (const auto& pair : m_long_symbols) 
+    for (const auto& pair : m_long_symbols)
     {
         const auto& long_symbol = pair.second;
         const auto current_symbol_it = std::find(long_symbol.begin(), long_symbol.end(), reel[pos]);
-        if (current_symbol_it != long_symbol.end()) 
+        if (current_symbol_it != long_symbol.end())
         {
             const auto adj_symbol_it = std::find(long_symbol.begin(), long_symbol.end(), reel[adjacent_pos]);
             return adj_symbol_it != long_symbol.end() && (adj_symbol_it - current_symbol_it) == static_cast<int>(direction);
@@ -431,9 +444,9 @@ bool LongSymbolsNormalizer::IsCompleteSymbol(VCORE_Figure::Identity_t symbol_id,
 
 VCORE_Figure::Identity_t LongSymbolsNormalizer::GetOriginalSymbolId(VCORE_Figure::Identity_t modified_symbol_id) const
 {
-    for (const auto& pair : m_long_symbols) 
+    for (const auto& pair : m_long_symbols)
     {
-        if (std::find(pair.second.begin(), pair.second.end(), modified_symbol_id) != pair.second.end()) 
+        if (std::find(pair.second.begin(), pair.second.end(), modified_symbol_id) != pair.second.end())
         {
             return pair.first;
         }
@@ -450,4 +463,17 @@ bool LongSymbolsNormalizer::IsEqualAllId(const VCORE_Reels::Reel_t& reel) const
 
     const auto original_reel = GetOriginalReel(reel);
     return std::all_of(cbegin(original_reel), cend(original_reel), [first_symbol_id = original_reel.front()](int symbol_id) { return symbol_id == first_symbol_id; });
+}
+
+VCORE_Figure::Identity_t LongSymbolsNormalizer::GetRandomReplaceSymbol() const
+{
+    assert(m_replace_symbols.size() > 0);
+    const auto index = GenerateRandomNumberWithinRange(m_replace_symbols.size() - 1);
+    return m_replace_symbols[index];
+}
+
+int LongSymbolsNormalizer::GenerateRandomNumberWithinRange(size_t max_value) const
+{
+    m_distributor.param(std::uniform_int_distribution<int>::param_type(0, static_cast<int>(max_value)));
+    return m_distributor(m_gen);
 }
