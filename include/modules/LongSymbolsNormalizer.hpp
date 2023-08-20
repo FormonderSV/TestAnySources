@@ -67,6 +67,11 @@ namespace vcore
 
     using LongSymbols_t = std::unordered_map<int, VCORE_Reels::Reel_t>;
 
+    enum class Direction_t
+    {
+        LEFT = -1,
+        RIGHT = 1,
+    };
 
     class LongSymbolsNormalizer
     {
@@ -88,9 +93,15 @@ namespace vcore
 
         void HandleSymbolModification(VCORE_Reels::Reel_t& new_reel, size_t symbol_pos) const;
 
+        size_t GetAdjacentIndex(const VCORE_Reels::Reel_t& adjacent_symbol, const VCORE_Reels::Reel_t& reel, size_t adj_pos) const;
+
+        void UpdateSymbolAtPosition(VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& long_symbols, size_t symbol_pos, bool is_next) const;
+
         void UpdateReelWithLongSymbols(VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& long_symbols, size_t symbol_pos) const;
 
-        VCORE_Reels::Reel_t GetModifiedRolling(const VCORE_Reels::Reel_t& original_reel, const VCORE_Reels::Reel_t& reel_contents) const;
+        VCORE_Reels::Reel_t GetModifiedFakeRolling(const VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& reel_contents) const;
+
+        VCORE_Reels::Reel_t GetModifiedTrueRolling(const VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& reel_contents) const;
 
         // Restore original reels
         VCORE_Reels GetOriginalReels(const VCORE_Reels& modified_reels) const;
@@ -122,7 +133,7 @@ namespace vcore
 
         bool IsPrevSymbolSame(const VCORE_Reels::Reel_t& reel, size_t pos) const;
 
-        bool IsAdjacentSymbolPartOfSameLongSymbol(const VCORE_Reels::Reel_t& reel, size_t pos, int direction) const;
+        bool IsAdjacentSymbolPartOfSameLongSymbol(const VCORE_Reels::Reel_t& reel, size_t pos, Direction_t direction) const;
 
         size_t GetSymbolLength(const VCORE_Reels::Reel_t& reel, size_t start_pos) const;
 
@@ -144,8 +155,6 @@ namespace vcore
         LongSymbols_t m_long_symbols;
         VCORE_Reels::Reel_t m_replace_symbols;
         bool m_use_random{ false };
-        static constexpr int NEXT_SYMBOL = 1;
-        static constexpr int PREV_SYMBOL = -1;
         static constexpr int DEFAULT_REEL_VALUE = -1;
     };
 }

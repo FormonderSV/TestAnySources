@@ -83,85 +83,87 @@ void LongSymbolsNormalizer::HandleSymbolModification(VCORE_Reels::Reel_t& new_re
     UpdateReelWithLongSymbols(new_reel, long_symbols, symbol_pos);
 }
 
+size_t LongSymbolsNormalizer::GetAdjacentIndex(const VCORE_Reels::Reel_t& adjacent_symbol, const VCORE_Reels::Reel_t& reel, size_t adj_pos) const
+{
+    return std::distance(adjacent_symbol.begin(), std::find(adjacent_symbol.begin(), adjacent_symbol.end(), reel[adj_pos]));
+}
+
+void LongSymbolsNormalizer::UpdateSymbolAtPosition(VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& long_symbols, size_t symbol_pos, bool is_next) const
+{
+    const auto adjacent_pos = is_next ? symbol_pos + 1 : symbol_pos - 1;
+    const auto adjacent_symbol = GetLongSymbol(reel[adjacent_pos]);
+
+    if (long_symbols.empty() && adjacent_symbol.empty())
+    {
+        return;
+    }
+
+    const size_t symbol_length = is_next ? GetSymbolLength(reel, adjacent_pos) : GetPrevSymbolLength(reel, adjacent_pos);
+
+    if (!adjacent_symbol.empty())
+    {
+        if (adjacent_symbol.size() == symbol_length)
+        {
+            if (!long_symbols.empty())
+            {
+                reel[symbol_pos] = is_next ? long_symbols.back() : long_symbols.front();
+            }
+            return;
+        }
+
+        const size_t index = GetAdjacentIndex(adjacent_symbol, reel, adjacent_pos);
+
+        if (adjacent_symbol.size() != symbol_length)
+        {
+            if (is_next)
+            {
+                reel[symbol_pos] = (index == 0) ? adjacent_symbol.back() : adjacent_symbol[index - 1];
+            }
+            else
+            {
+                reel[symbol_pos] = (index == adjacent_symbol.size() - 1) ? adjacent_symbol.front() : adjacent_symbol[index + 1];
+            }
+            return;
+        }
+    }
+
+    if (long_symbols == adjacent_symbol)
+    {
+        const size_t index = GetAdjacentIndex(long_symbols, reel, adjacent_pos);
+        reel[symbol_pos] = (is_next && index == 0) ? long_symbols.back() : long_symbols[index - 1 + is_next];
+        return;
+    }
+
+    if (!long_symbols.empty())
+    {
+        reel[symbol_pos] = is_next ? long_symbols.back() : long_symbols.front();
+    }
+}
+
 void LongSymbolsNormalizer::UpdateReelWithLongSymbols(VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& long_symbols, size_t symbol_pos) const
 {
     if (symbol_pos == 0 && symbol_pos + 1 < reel.size())
     {
-        const auto long_next_symbol = GetLongSymbol(reel[symbol_pos + 1]);
-        if (long_symbols.empty() && long_next_symbol.empty())
-        {
-            return;
-        }
-
-        const size_t symbol_length = GetSymbolLength(reel, symbol_pos + 1);
-        if (!long_next_symbol.empty() && long_next_symbol.size() == symbol_length)
-        {
-            if (!long_symbols.empty())
-            {
-                reel[symbol_pos] = long_symbols.at(long_symbols.size() - 1);
-            }
-        }
-        else if(!long_next_symbol.empty() && long_next_symbol.size() != symbol_length)
-        {
-            const size_t index = std::distance(long_next_symbol.begin(), std::find(long_next_symbol.begin(), long_next_symbol.end(), reel[symbol_pos + 1]));
-            reel[symbol_pos] = long_next_symbol.at(index == 0 ? long_next_symbol.size() - 1 : index - 1);
-        }
-        else if (long_symbols.empty() && !long_next_symbol.empty())
-        {
-            const size_t index = std::distance(long_next_symbol.begin(), std::find(long_next_symbol.begin(), long_next_symbol.end(), reel[symbol_pos + 1]));
-            reel[symbol_pos] = long_next_symbol.at(index == 0 ? long_next_symbol.size() - 1 : index - 1);
-        }
-        else if (long_symbols == long_next_symbol)
-        {
-            const size_t index = std::distance(long_symbols.begin(), std::find(long_symbols.begin(), long_symbols.end(), reel[symbol_pos + 1]));
-            reel[symbol_pos] = long_symbols.at(index == 0 ? long_symbols.size() - 1 : index - 1);
-        }
-        else if (!long_symbols.empty())
-        {
-            reel[symbol_pos] = long_symbols.at(long_symbols.size() - 1);
-        }
+        UpdateSymbolAtPosition(reel, long_symbols, symbol_pos, true);
     }
     else if (symbol_pos == reel.size() - 1 && symbol_pos - 1 > 0)
     {
-        const auto long_prev_symbol = GetLongSymbol(reel[symbol_pos - 1]);
-        if (long_symbols.empty() && long_prev_symbol.empty())
-        {
-            return;
-        }
-
-        const size_t symbol_length = GetPrevSymbolLength(reel, symbol_pos - 1);
-        if (!long_prev_symbol.empty() && long_prev_symbol.size() == symbol_length)
-        {
-            if (!long_symbols.empty())
-            {
-                reel[symbol_pos] = long_symbols.at(0);
-            }
-        }
-        else if (!long_prev_symbol.empty() && long_prev_symbol.size() != symbol_length)
-        {
-            const size_t index = std::distance(long_prev_symbol.begin(), std::find(long_prev_symbol.begin(), long_prev_symbol.end(), reel[symbol_pos - 1]));
-            reel[symbol_pos] = long_prev_symbol.at(index == long_prev_symbol.size() - 1 ? 0 : index + 1);
-        }
-        else if (long_symbols.empty() && !long_prev_symbol.empty())
-        {
-            const size_t index = std::distance(long_prev_symbol.begin(), std::find(long_prev_symbol.begin(), long_prev_symbol.end(), reel[symbol_pos - 1]));
-            reel[symbol_pos] = long_prev_symbol.at(index == long_prev_symbol.size() - 1 ? 0 : index + 1);
-        }
-        else if (long_symbols == long_prev_symbol)
-        {
-            const size_t index = std::distance(long_symbols.begin(), std::find(long_symbols.begin(), long_symbols.end(), reel[symbol_pos - 1]));
-            reel[symbol_pos] = long_symbols.at(index == long_symbols.size() - 1 ? 0 : index + 1);
-        }
-        else if (!long_symbols.empty())
-        {
-            reel[symbol_pos] = long_symbols.at(0);
-        }
+        UpdateSymbolAtPosition(reel, long_symbols, symbol_pos, false);
     }
 }
 
-VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedRolling(const VCORE_Reels::Reel_t& original_reel, const VCORE_Reels::Reel_t& reel_contents) const
+VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedFakeRolling(const VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& reel_contents) const
 {
-    VCORE_Reels::Reel_t new_reel = original_reel;
+    // В данном коде сразу приходит модифицированная матрица, все длынные символы преобразованы в нужныее ID
+    // Данная роллинг матрица будет крутиться 
+    VCORE_Reels::Reel_t new_reel = reel;
+    new_reel.insert(new_reel.end(), reel_contents.begin(), reel_contents.end());
+    return new_reel;
+}
+
+VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedTrueRolling(const VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& reel_contents) const
+{
+    VCORE_Reels::Reel_t new_reel = reel;
     new_reel.insert(new_reel.end(), reel_contents.begin(), reel_contents.end());
     return new_reel;
 }
@@ -327,15 +329,18 @@ bool LongSymbolsNormalizer::IsPrevSymbolSame(const VCORE_Reels::Reel_t& reel, si
     return pos > 0 && reel[pos] == reel[pos - 1];
 }
 
-bool LongSymbolsNormalizer::IsAdjacentSymbolPartOfSameLongSymbol(const VCORE_Reels::Reel_t& reel, size_t pos, int direction) const
+bool LongSymbolsNormalizer::IsAdjacentSymbolPartOfSameLongSymbol(const VCORE_Reels::Reel_t& reel, size_t pos, Direction_t direction) const
 {
-    if (direction == NEXT_SYMBOL && pos + 1 >= reel.size()) 
+    if (!(direction == Direction_t::LEFT || direction == Direction_t::RIGHT))
         return false;
 
-    if (direction == PREV_SYMBOL && pos == 0) 
+    if (direction == Direction_t::RIGHT && pos + 1 >= reel.size()) 
         return false;
 
-    const auto adjacent_pos = pos + direction;
+    if (direction == Direction_t::LEFT && pos == 0)
+        return false;
+
+    const auto adjacent_pos = pos + static_cast<int>(direction);
     for (const auto& pair : m_long_symbols) 
     {
         const auto& long_symbol = pair.second;
@@ -343,7 +348,7 @@ bool LongSymbolsNormalizer::IsAdjacentSymbolPartOfSameLongSymbol(const VCORE_Ree
         if (current_symbol_it != long_symbol.end()) 
         {
             const auto adj_symbol_it = std::find(long_symbol.begin(), long_symbol.end(), reel[adjacent_pos]);
-            return adj_symbol_it != long_symbol.end() && (adj_symbol_it - current_symbol_it) == direction;
+            return adj_symbol_it != long_symbol.end() && (adj_symbol_it - current_symbol_it) == static_cast<int>(direction);
         }
     }
     return false;
@@ -352,7 +357,7 @@ bool LongSymbolsNormalizer::IsAdjacentSymbolPartOfSameLongSymbol(const VCORE_Ree
 size_t LongSymbolsNormalizer::GetSymbolLength(const VCORE_Reels::Reel_t& reel, size_t start_pos) const
 {
     size_t length = 1;
-    while (IsNextSymbolSame(reel, start_pos) || IsAdjacentSymbolPartOfSameLongSymbol(reel, start_pos, 1))
+    while (IsNextSymbolSame(reel, start_pos) || IsAdjacentSymbolPartOfSameLongSymbol(reel, start_pos, Direction_t::RIGHT))
     {
         ++length;
         ++start_pos;
@@ -363,7 +368,7 @@ size_t LongSymbolsNormalizer::GetSymbolLength(const VCORE_Reels::Reel_t& reel, s
 size_t LongSymbolsNormalizer::GetPrevSymbolLength(const VCORE_Reels::Reel_t& reel, size_t start_pos) const
 {
     size_t length = 1;
-    while (IsPrevSymbolSame(reel, start_pos) || IsAdjacentSymbolPartOfSameLongSymbol(reel, start_pos, -1))
+    while (IsPrevSymbolSame(reel, start_pos) || IsAdjacentSymbolPartOfSameLongSymbol(reel, start_pos, Direction_t::LEFT))
     {
         ++length;
         --start_pos;
