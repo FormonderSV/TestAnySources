@@ -3,6 +3,22 @@
 
 using namespace vcore;
 
+namespace
+{
+    std::string VectorToString(const VCORE_Reels::Reel_t& vec) {
+        std::ostringstream oss;
+        oss << "{";
+        for (size_t i = 0; i < vec.size(); ++i) {
+            oss << vec[i];
+            if (i != vec.size() - 1) {
+                oss << ", ";
+            }
+        }
+        oss << "}";
+        return oss.str();
+    }
+}
+
 TEST(LongSymbolsNormalizerTest, TestConstructorAndSetLongSymbols)
 {
     const LongSymbols_t long_symbols = {
@@ -262,7 +278,7 @@ TEST(LongSymbolsNormalizerTest, GetModifiedFakeRollings)
     };
 
     const std::vector<VCORE_Reels::Reel_t> expected_fake_rolling {
-        { 9, 10, 11, 12, 13, 14, 40, 41, 51, 52, 53, 54, 55,  8,  9, 10, 11, 12, 13, 14,  9, 10, 11, 12, 13, 40, 41, 48, 49, 50 },
+        { 9, 10, 11, 12, 13, 14, 40, 41, 51, 52, 53, 54, 55,  8,  9, 10, 11, 12, 13, 14,  9, 10, 11, 12, 13, 14, 9, 48, 49, 50 },
         { 9, 10, 11, 12, 13, 14, 48, 49, 55,  9, 42, 43,  9,  8,  9, 10, 11, 12, 13, 14,  9, 10, 11, 12, 13, 14,  9, 52, 53, 54 },
         { 9, 10, 11, 12, 13, 14, 48, 49, 59,  9, 44, 45,  9,  8,  9, 10, 11, 12, 13, 14,  9, 10, 11, 12, 13, 14,  9, 56, 57, 58 },
         { 9, 10, 11, 12, 13, 14, 48, 49, 53, 54, 55, 52, 53, 54, 55, 40, 41,  8,  9, 10, 11, 12, 13, 14,  9, 10, 11, 12, 13, 52 },
@@ -275,7 +291,7 @@ TEST(LongSymbolsNormalizerTest, GetModifiedFakeRollings)
     for (size_t i = 0; i < expected_fake_rolling.size(); ++i)
     {
         const auto modified_reel_contents = normalizer.GetModifiedFakeRolling(original_fake_rolling[i], current_contents[i]);
-        EXPECT_EQ(expected_fake_rolling[i], modified_reel_contents);
+        EXPECT_EQ(expected_fake_rolling[i], modified_reel_contents) << "\original_fake_rolling: " << VectorToString(original_fake_rolling[i]);
     }
 }
 

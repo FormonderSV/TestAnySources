@@ -94,7 +94,9 @@ namespace vcore
 
         void HandleSymbolModification(VCORE_Reels::Reel_t& new_reel, size_t symbol_pos) const;
 
-        size_t GetAdjacentIndex(const VCORE_Reels::Reel_t& adjacent_symbol, const VCORE_Reels::Reel_t& reel, size_t adj_pos) const;
+        size_t GetAdjacentIndex(const VCORE_Reels::Reel_t& long_symbol, const VCORE_Reels::Reel_t& reel, size_t adj_pos) const;
+
+        size_t GetLongSymbolIndex(const VCORE_Reels::Reel_t& long_symbol, VCORE_Figure::Identity_t symbol_id) const;
 
         void UpdateSymbolAtPosition(VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& long_symbols, size_t symbol_pos, bool is_next) const;
 

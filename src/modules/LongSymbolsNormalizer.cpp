@@ -98,26 +98,31 @@ void LongSymbolsNormalizer::HandleSymbolModification(VCORE_Reels::Reel_t& new_re
     UpdateReelWithLongSymbols(new_reel, long_symbols, symbol_pos);
 }
 
-size_t LongSymbolsNormalizer::GetAdjacentIndex(const VCORE_Reels::Reel_t& adjacent_symbol, const VCORE_Reels::Reel_t& reel, size_t adj_pos) const
+size_t LongSymbolsNormalizer::GetAdjacentIndex(const VCORE_Reels::Reel_t& long_symbol, const VCORE_Reels::Reel_t& reel, size_t adj_pos) const
 {
-    return std::distance(adjacent_symbol.begin(), std::find(adjacent_symbol.begin(), adjacent_symbol.end(), reel[adj_pos]));
+    return std::distance(long_symbol.begin(), std::find(long_symbol.begin(), long_symbol.end(), reel[adj_pos]));
+}
+
+size_t LongSymbolsNormalizer::GetLongSymbolIndex(const VCORE_Reels::Reel_t& long_symbol, VCORE_Figure::Identity_t symbol_id) const
+{
+    return std::distance(long_symbol.begin(), std::find(long_symbol.begin(), long_symbol.end(), symbol_id));
 }
 
 void LongSymbolsNormalizer::UpdateSymbolAtPosition(VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& long_symbols, size_t symbol_pos, bool is_next) const
 {
     const auto adjacent_pos = is_next ? symbol_pos + 1 : symbol_pos - 1;
-    const auto adjacent_symbol = GetLongSymbol(reel[adjacent_pos]);
+    const auto adjacent_long_symbols = GetLongSymbol(reel[adjacent_pos]);
 
-    if (long_symbols.empty() && adjacent_symbol.empty())
+    if (long_symbols.empty() && adjacent_long_symbols.empty())
     {
         return;
     }
 
     const size_t symbol_length = is_next ? GetSymbolLength(reel, adjacent_pos) : GetPrevSymbolLength(reel, adjacent_pos);
 
-    if (!adjacent_symbol.empty())
+    if (!adjacent_long_symbols.empty())
     {
-        if (adjacent_symbol.size() == symbol_length)
+        if (adjacent_long_symbols.size() == symbol_length)
         {
             if (!long_symbols.empty())
             {
@@ -126,23 +131,23 @@ void LongSymbolsNormalizer::UpdateSymbolAtPosition(VCORE_Reels::Reel_t& reel, co
             return;
         }
 
-        const size_t index = GetAdjacentIndex(adjacent_symbol, reel, adjacent_pos);
+        const size_t index = GetAdjacentIndex(adjacent_long_symbols, reel, adjacent_pos);
 
-        if (adjacent_symbol.size() != symbol_length)
+        if (adjacent_long_symbols.size() != symbol_length)
         {
             if (is_next)
             {
-                reel[symbol_pos] = (index == 0) ? adjacent_symbol.back() : adjacent_symbol[index - 1];
+                reel[symbol_pos] = (index == 0) ? adjacent_long_symbols.back() : adjacent_long_symbols[index - 1];
             }
             else
             {
-                reel[symbol_pos] = (index == adjacent_symbol.size() - 1) ? adjacent_symbol.front() : adjacent_symbol[index + 1];
+                reel[symbol_pos] = (index == adjacent_long_symbols.size() - 1) ? adjacent_long_symbols.front() : adjacent_long_symbols[index + 1];
             }
             return;
         }
     }
 
-    if (long_symbols == adjacent_symbol)
+    if (long_symbols == adjacent_long_symbols)
     {
         const size_t index = GetAdjacentIndex(long_symbols, reel, adjacent_pos);
         reel[symbol_pos] = (is_next && index == 0) ? long_symbols.back() : long_symbols[index - 1 + is_next];
@@ -169,17 +174,86 @@ void LongSymbolsNormalizer::UpdateReelWithLongSymbols(VCORE_Reels::Reel_t& reel,
 
 VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedFakeRolling(const VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& current_contents) const
 {
-    // В данном коде сразу приходит модифицированная матрица, все длынные символы преобразованы в нужные ID
-    // Данная роллинг матрица будет крутиться циклично начиная с последнего id до reel_contents.size(). Т.е. если длина роллинга 30 а reel_contents.size() == 6,
-    // то для роллинга будут использоватьcя ID с 29 по 7. reel.size() - reel_contents.size();
-    // Важно соблюдать цикличность в данном роллинге и не допустить разрыва длинных символов.
-    // При старте роллинга берётся первый символ с reel_contents и соединяется с последним символом reel
-    // reel_contents используется только вначале крутки, после прокрутки reel_contents.size() символов, reel_contents, более использоваться не будет.
+    VCORE_Reels::Reel_t new_reel = reel;
 
     auto left_index = current_contents.size();
-    auto current_figure_id = current_contents.front();
+    auto right_index = reel.size() - 1;
 
-    VCORE_Reels::Reel_t new_reel = reel;
+    if (IsSymbolPartOfLongSymbol(current_contents.front()))
+    {
+        const auto& long_symbol = GetLongSymbol(current_contents.front());
+        const auto symbol_length = GetSymbolLength(current_contents, 0);
+
+        if (symbol_length != long_symbol.size())
+        {
+            const auto index = GetLongSymbolIndex(long_symbol, current_contents.front());
+
+            for (int i = static_cast<int>(index) - 1; i >= 0; --i)
+            {
+                new_reel[right_index] = long_symbol[i];
+                --right_index;
+            }
+
+            for (int i = static_cast<int>(index); i < static_cast<int>(long_symbol.size()); ++i)
+            {
+                new_reel[left_index] = long_symbol[i];
+                ++left_index;
+            }
+        }
+    }
+
+    while (left_index <= right_index)
+    {
+        if (IsSymbolPartOfLongSymbol(reel[left_index]))
+        {
+            const auto& long_symbol = GetLongSymbol(reel[left_index]);
+            const auto symbol_length = GetSymbolLength(new_reel, left_index);
+            const auto& half_long_symbol_size = long_symbol.size() / 2;
+
+            if (symbol_length < half_long_symbol_size)
+            {
+                const auto end_pos = left_index + symbol_length;
+
+                for (; left_index <= right_index && left_index < end_pos; ++left_index)
+                {
+                    new_reel[left_index] = GetRandomReplaceSymbol();
+                }
+            }
+            else if (symbol_length != long_symbol.size())
+            {
+                if (right_index - left_index > long_symbol.size())
+                {
+                    for (int i = 0; i < static_cast<int>(long_symbol.size()); ++i)
+                    {
+                        new_reel[left_index] = long_symbol[i];
+                        ++left_index;
+                    }
+                }
+                else
+                {
+                    for (; left_index <= right_index; ++left_index)
+                    {
+                        new_reel[left_index] = GetRandomReplaceSymbol();
+                    }
+                }
+            }
+            else if (symbol_length == long_symbol.size())
+            {
+                left_index += symbol_length;
+            }
+            else
+            {
+                left_index++;
+            }
+        }
+        else
+        {
+            left_index++;
+        }
+    }
+
+
+
     return new_reel;
 }
 
