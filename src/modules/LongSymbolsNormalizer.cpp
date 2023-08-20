@@ -172,90 +172,100 @@ void LongSymbolsNormalizer::UpdateReelWithLongSymbols(VCORE_Reels::Reel_t& reel,
     }
 }
 
+void LongSymbolsNormalizer::UpdateReelForFrontSymbol(VCORE_Reels::Reel_t& new_reel, const VCORE_Reels::Reel_t& current_contents, size_t& left_index, size_t& right_index) const
+{
+    const auto& long_symbol = GetLongSymbol(current_contents.front());
+    const auto symbol_length = GetSymbolLength(current_contents, 0);
+    const auto index = GetLongSymbolIndex(long_symbol, current_contents.front());
+
+    if (symbol_length == long_symbol.size()) 
+    {
+        return; 
+    }
+
+    for (int i = static_cast<int>(index) - 1; i >= 0; --i) 
+    {
+        new_reel[right_index] = long_symbol[i];
+        --right_index;
+    }
+
+    for (int i = static_cast<int>(index); i < static_cast<int>(long_symbol.size()); ++i) 
+    {
+        new_reel[left_index] = long_symbol[i];
+        ++left_index;
+    }
+}
+
+void LongSymbolsNormalizer::UpdateReelForOtherSymbols(VCORE_Reels::Reel_t& new_reel, const VCORE_Reels::Reel_t& reel, size_t& left_index, size_t right_index) const
+{
+    const auto& long_symbol = GetLongSymbol(reel[left_index]);
+    const auto symbol_length = GetSymbolLength(new_reel, left_index);
+    const auto half_long_symbol_size = long_symbol.size() / 2;
+
+    if (symbol_length < half_long_symbol_size) 
+    {
+        ReplaceWithRandomSymbols(new_reel, left_index, right_index, symbol_length);
+    }
+    else 
+    {
+        ReplaceOrExtendLongSymbol(new_reel, long_symbol, left_index, right_index);
+    }
+}
+
+void LongSymbolsNormalizer::ReplaceWithRandomSymbols(VCORE_Reels::Reel_t& new_reel, size_t& left_index, size_t right_index, size_t symbol_length) const
+{
+    const size_t end_pos = left_index + symbol_length;
+    for (; left_index <= right_index && left_index < end_pos; ++left_index) 
+    {
+        new_reel[left_index] = GetRandomReplaceSymbol();
+    }
+}
+
+void LongSymbolsNormalizer::ReplaceOrExtendLongSymbol(VCORE_Reels::Reel_t& new_reel, const VCORE_Reels::Reel_t& long_symbol, size_t& left_index, size_t right_index) const
+{
+    if (right_index - left_index + 1 >= long_symbol.size())
+    {
+        for (const auto symbol_id : long_symbol)
+        {
+            new_reel[left_index] = symbol_id;
+            ++left_index;
+        }
+    }
+    else
+    {
+        for (; left_index <= right_index; ++left_index)
+        {
+            new_reel[left_index] = GetRandomReplaceSymbol();
+        }
+    }
+}
+
 VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedFakeRolling(const VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& current_contents) const
 {
     VCORE_Reels::Reel_t new_reel = reel;
-
-    auto left_index = current_contents.size() + 1;
-    auto right_index = reel.size() - 1;
+    size_t left_index = current_contents.size() + 1;
+    size_t right_index = reel.size() - 1;
 
     if (IsSymbolPartOfLongSymbol(current_contents.front()))
     {
-        const auto& long_symbol = GetLongSymbol(current_contents.front());
-        const auto symbol_length = GetSymbolLength(current_contents, 0);
-
-        if (symbol_length != long_symbol.size())
-        {
-            const auto index = GetLongSymbolIndex(long_symbol, current_contents.front());
-
-            for (int i = static_cast<int>(index) - 1; i >= 0; --i)
-            {
-                new_reel[right_index] = long_symbol[i];
-                --right_index;
-            }
-
-            for (int i = static_cast<int>(index); i < static_cast<int>(long_symbol.size()); ++i)
-            {
-                new_reel[left_index] = long_symbol[i];
-                ++left_index;
-            }
-        }
+        UpdateReelForFrontSymbol(new_reel, current_contents, left_index, right_index);
     }
 
-    while (left_index <= right_index)
+    while (left_index <= right_index) 
     {
-        if (IsSymbolPartOfLongSymbol(reel[left_index]))
+        if (IsSymbolPartOfLongSymbol(reel[left_index])) 
         {
-            const auto& long_symbol = GetLongSymbol(reel[left_index]);
-            const auto symbol_length = GetSymbolLength(new_reel, left_index);
-            const auto& half_long_symbol_size = long_symbol.size() / 2;
-
-            if (symbol_length < half_long_symbol_size)
-            {
-                const auto end_pos = left_index + symbol_length;
-
-                for (; left_index <= right_index && left_index < end_pos; ++left_index)
-                {
-                    new_reel[left_index] = GetRandomReplaceSymbol();
-                }
-            }
-            else if (symbol_length != long_symbol.size())
-            {
-                if (right_index - left_index > long_symbol.size())
-                {
-                    for (int i = 0; i < static_cast<int>(long_symbol.size()); ++i)
-                    {
-                        new_reel[left_index] = long_symbol[i];
-                        ++left_index;
-                    }
-                }
-                else
-                {
-                    for (; left_index <= right_index; ++left_index)
-                    {
-                        new_reel[left_index] = GetRandomReplaceSymbol();
-                    }
-                }
-            }
-            else if (symbol_length == long_symbol.size())
-            {
-                left_index += symbol_length;
-            }
-            else
-            {
-                left_index++;
-            }
+            UpdateReelForOtherSymbols(new_reel, reel, left_index, right_index);
         }
-        else
+        else 
         {
             left_index++;
         }
     }
 
-
-
     return new_reel;
 }
+
 
 VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedTrueRolling(const VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& current_contents) const
 {
