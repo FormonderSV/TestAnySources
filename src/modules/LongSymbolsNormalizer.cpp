@@ -176,7 +176,7 @@ VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedFakeRolling(const VCORE_Re
 {
     VCORE_Reels::Reel_t new_reel = reel;
 
-    auto left_index = current_contents.size();
+    auto left_index = current_contents.size() + 1;
     auto right_index = reel.size() - 1;
 
     if (IsSymbolPartOfLongSymbol(current_contents.front()))
