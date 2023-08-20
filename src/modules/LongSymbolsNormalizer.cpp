@@ -293,8 +293,8 @@ VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedTrueRolling(const VCORE_Re
 
     if (IsSymbolPartOfLongSymbol(new_reel[left_index]))
     {
-        const auto& long_symbol = GetLongSymbol(current_contents.front());
-        const auto symbol_length = GetSymbolLength(current_contents, 0);
+        const auto& long_symbol = GetLongSymbol(new_reel[left_index]);
+        const auto symbol_length = GetSymbolLength(new_reel, left_index);
 
         if (symbol_length != long_symbol.size())
         {

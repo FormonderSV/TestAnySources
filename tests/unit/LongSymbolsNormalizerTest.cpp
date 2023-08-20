@@ -317,6 +317,7 @@ TEST(LongSymbolsNormalizerTest, GetModifiedTrueRollings)
         { 57, 58, 59, 44, 45, 9, 8, 9 },
         { 13, 52, 53, 54, 55, 52, 53, 54 },
         { 54, 55, 9, 42, 43, 9, 8, 9 },
+        { 14, 8, 10, 10, 10, 12, 13, 9 },
     };
 
     const std::vector<VCORE_Reels::Reel_t> original_true_rolling {
@@ -325,6 +326,7 @@ TEST(LongSymbolsNormalizerTest, GetModifiedTrueRollings)
         { 57, 8, 10, 56, 57, 58, 59, 58, 9, 10, 11, 12, 13, 14 },
         { 13, 54, 55, 44, 45, 9, 44, 52, 9, 10, 11, 12, 13, 14 },
         { 54, 53, 54, 55, 44, 45, 40, 55, 9, 10, 11, 12, 13, 14 },
+        { 14, 10, 10, 56, 57, 58, 59, 8, 10, 10, 10, 12, 13, 9 },
     };
 
     const std::vector<VCORE_Reels::Reel_t> expected_true_rolling {
@@ -332,7 +334,8 @@ TEST(LongSymbolsNormalizerTest, GetModifiedTrueRollings)
         { 55, 52, 53, 54, 55, 8, 52, 53, 54, 55, 11, 12, 13, 52 },
         { 59, 8, 10, 56, 57, 58, 59, 9, 9, 10, 11, 12, 13, 56 },
         { 53, 54, 55, 44, 45, 9, 44, 45, 9, 10, 11, 12, 13, 14 },
-        { 52, 53, 54, 55, 44, 45, 40,41, 9, 10, 11, 12, 52, 53 },
+        { 52, 53, 54, 55, 44, 45, 40, 41, 9, 10, 11, 12, 52, 53 },
+        { 14, 10, 10, 56, 57, 58, 59, 8, 10, 10, 10, 12, 13, 9 },
     };
 
     EXPECT_EQ(original_true_rolling.size(), expected_true_rolling.size());
