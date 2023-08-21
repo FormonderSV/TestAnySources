@@ -582,25 +582,60 @@ VCORE_Reels::Reel_t LongSymbolsNormalizer::GenerateReelWithLongSymbols(const VCO
 {
     VCORE_Reels::Reel_t new_reel = original_reel;
 
-    for (size_t symbol_pos = 0; symbol_pos < original_reel.size();)
+    if(IsLongSymbol(original_reel[original_reel.size() - 1]))
     {
-        auto original_symbol = original_reel[symbol_pos];
-
-        if (IsLongSymbol(original_symbol))
+        for (size_t symbol_pos = 0; symbol_pos < original_reel.size();)
         {
-            const size_t symbol_length = GetSymbolLength(original_reel, symbol_pos);
-            size_t start_index = symbol_pos == 0 ? std::max(0, static_cast<int>(m_long_symbols.at(original_symbol).size() - symbol_length)) : 0;
+            auto original_symbol = original_reel[symbol_pos];
 
-            for (size_t count = 0; count < symbol_length && symbol_pos < original_reel.size() && start_index < m_long_symbols.at(original_symbol).size(); ++symbol_pos, ++start_index, ++count)
+            if (IsLongSymbol(original_symbol))
             {
-                new_reel[symbol_pos] = m_long_symbols.at(original_symbol).at(start_index);
+                const size_t symbol_length = GetSymbolLength(original_reel, symbol_pos);
+                size_t start_index = symbol_pos == 0 ? std::max(0, static_cast<int>(m_long_symbols.at(original_symbol).size() - symbol_length)) : 0;
+
+                for (size_t count = 0; count < symbol_length && symbol_pos < original_reel.size() && start_index < m_long_symbols.at(original_symbol).size(); ++symbol_pos, ++start_index, ++count)
+                {
+                    new_reel[symbol_pos] = m_long_symbols.at(original_symbol).at(start_index);
+                }
+            }
+            else
+            {
+                ++symbol_pos;
             }
         }
-        else
+    }
+    else
+    {
+        for (size_t symbol_pos = original_reel.size() - 1; symbol_pos < original_reel.size();)
         {
-            ++symbol_pos;
+            auto original_symbol = original_reel[symbol_pos];
+
+            if (IsLongSymbol(original_symbol))
+            {
+                const size_t symbol_length = GetPrevSymbolLength(original_reel, symbol_pos);
+                size_t start_index = m_long_symbols.at(original_symbol).size() - 1;
+
+                for (size_t count = 0; count < symbol_length && symbol_pos < original_reel.size(); --symbol_pos, ++count)
+                {
+                    new_reel[symbol_pos] = m_long_symbols.at(original_symbol).at(start_index);
+                    start_index = start_index == 0 ? m_long_symbols.at(original_symbol).size() - 1 : start_index - 1;
+                }
+                
+                symbol_pos -= symbol_length - 1;
+            }
+            else
+            {
+                if (symbol_pos == 0)
+                {
+                    break;
+                }
+
+                --symbol_pos;
+            }
         }
     }
+
+
     return new_reel;
 }
 
