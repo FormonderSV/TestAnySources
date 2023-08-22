@@ -106,7 +106,7 @@ VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedContents(const VCORE_Reels
 
 void LongSymbolsNormalizer::HandleSymbolModification(VCORE_Reels::Reel_t& new_reel, size_t symbol_pos) const
 {
-    const auto long_symbols = GetLongSymbol(new_reel[symbol_pos]);
+    const auto long_symbols = GetLongSymbolFor(new_reel[symbol_pos]);
     UpdateReelWithLongSymbols(new_reel, long_symbols, symbol_pos);
 }
 
@@ -123,7 +123,7 @@ size_t LongSymbolsNormalizer::GetLongSymbolIndex(const VCORE_Reels::Reel_t& long
 void LongSymbolsNormalizer::UpdateSymbolAtPosition(VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& long_symbols, size_t symbol_pos, bool is_next) const
 {
     const auto adjacent_pos = is_next ? symbol_pos + 1 : symbol_pos - 1;
-    const auto adjacent_long_symbols = GetLongSymbol(reel[adjacent_pos]);
+    const auto adjacent_long_symbols = GetLongSymbolFor(reel[adjacent_pos]);
 
     if (long_symbols.empty() && adjacent_long_symbols.empty())
     {
@@ -186,7 +186,7 @@ void LongSymbolsNormalizer::UpdateReelWithLongSymbols(VCORE_Reels::Reel_t& reel,
 
 void LongSymbolsNormalizer::UpdateReelForFrontSymbol(VCORE_Reels::Reel_t& new_reel, const VCORE_Reels::Reel_t& current_contents, size_t& left_index, size_t& right_index) const
 {
-    const auto& long_symbol = GetLongSymbol(current_contents.front());
+    const auto& long_symbol = GetLongSymbolFor(current_contents.front());
     const auto symbol_length = GetSymbolLength(current_contents, 0);
     const auto index = GetLongSymbolIndex(long_symbol, current_contents.front());
 
@@ -210,7 +210,7 @@ void LongSymbolsNormalizer::UpdateReelForFrontSymbol(VCORE_Reels::Reel_t& new_re
 
 void LongSymbolsNormalizer::UpdateReelForOtherSymbols(VCORE_Reels::Reel_t& new_reel, const VCORE_Reels::Reel_t& reel, size_t& left_index, size_t right_index) const
 {
-    const auto& long_symbol = GetLongSymbol(reel[left_index]);
+    const auto& long_symbol = GetLongSymbolFor(reel[left_index]);
     const auto symbol_length = GetSymbolLength(new_reel, left_index);
     const auto half_long_symbol_size = long_symbol.size() / 2;
 
@@ -288,7 +288,7 @@ VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedTrueRolling(const VCORE_Re
 
     if (IsPartOfLongSymbol(current_contents.front()))
     {
-        const auto& long_symbol = GetLongSymbol(current_contents.front());
+        const auto& long_symbol = GetLongSymbolFor(current_contents.front());
         const auto symbol_length = GetSymbolLength(current_contents, 0);
 
         if (symbol_length != long_symbol.size())
@@ -305,7 +305,7 @@ VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedTrueRolling(const VCORE_Re
 
     if (IsPartOfLongSymbol(new_reel[left_index]))
     {
-        const auto& long_symbol = GetLongSymbol(new_reel[left_index]);
+        const auto& long_symbol = GetLongSymbolFor(new_reel[left_index]);
         const auto symbol_length = GetSymbolLength(new_reel, left_index);
 
         if (symbol_length != long_symbol.size())
@@ -324,7 +324,7 @@ VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedTrueRolling(const VCORE_Re
     {
         if (IsPartOfLongSymbol(new_reel[left_index]))
         {
-            const auto& long_symbol = GetLongSymbol(reel[left_index]);
+            const auto& long_symbol = GetLongSymbolFor(reel[left_index]);
             const auto symbol_length = GetSymbolLength(new_reel, left_index);
             const auto& half_long_symbol_size = long_symbol.size() / 2;
 
@@ -370,7 +370,7 @@ VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedTrueRolling(const VCORE_Re
         }
     }
 
-    const auto& long_symbol = GetLongSymbol(new_reel[1]);
+    const auto& long_symbol = GetLongSymbolFor(new_reel[1]);
     const auto symbol_length = GetSymbolLength(new_reel, 1);
 
     if (IsPartOfLongSymbol(new_reel[1]) && long_symbol.size() != symbol_length)
@@ -383,7 +383,7 @@ VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedTrueRolling(const VCORE_Re
     }
     else if (IsPartOfLongSymbol(new_reel[0]))
     {
-        const auto& first_long_symbol = GetLongSymbol(new_reel[0]);
+        const auto& first_long_symbol = GetLongSymbolFor(new_reel[0]);
         new_reel[0] = first_long_symbol[first_long_symbol.size() - 1];
     }
 
@@ -489,9 +489,9 @@ VCORE_Game::Figures_t LongSymbolsNormalizer::GetAdditionalPayTableSymbols(const 
 
 bool LongSymbolsNormalizer::IsPartOfLongSymbol(VCORE_Figure::Identity_t symbol_id) const
 {
-    for (const auto& pair : m_long_symbols) 
+    for (const auto& pair : m_long_symbols)
     {
-        if (symbol_id == pair.first || std::find(pair.second.begin(), pair.second.end(), symbol_id) != pair.second.end()) 
+        if (symbol_id == pair.first || std::find(pair.second.begin(), pair.second.end(), symbol_id) != pair.second.end())
         {
             return true;
         }
@@ -500,7 +500,7 @@ bool LongSymbolsNormalizer::IsPartOfLongSymbol(VCORE_Figure::Identity_t symbol_i
     return false;
 }
 
-VCORE_Reels::Reel_t LongSymbolsNormalizer::GetLongSymbol(VCORE_Figure::Identity_t symbol_id) const
+VCORE_Reels::Reel_t LongSymbolsNormalizer::GetLongSymbolFor(VCORE_Figure::Identity_t symbol_id) const
 {
     for (const auto& pair : m_long_symbols)
     {
@@ -595,61 +595,70 @@ VCORE_Reels::Reel_t LongSymbolsNormalizer::GenerateReelWithLongSymbols(const VCO
 {
     VCORE_Reels::Reel_t new_reel = original_reel;
 
-    if (IsLongSymbol(original_reel[original_reel.size() - 1]))
+    if (IsPartOfLongSymbol(original_reel.back()))
     {
-        for (size_t symbol_pos = 0; symbol_pos < original_reel.size();)
-        {
-            auto original_symbol = original_reel[symbol_pos];
-
-            if (IsLongSymbol(original_symbol))
-            {
-                const size_t symbol_length = GetSymbolLength(original_reel, symbol_pos);
-                size_t start_index = symbol_pos == 0 ? std::max(0, static_cast<int>(m_long_symbols.at(original_symbol).size() - symbol_length)) : 0;
-
-                for (size_t count = 0; count < symbol_length && symbol_pos < original_reel.size() && start_index < m_long_symbols.at(original_symbol).size(); ++symbol_pos, ++start_index, ++count)
-                {
-                    new_reel[symbol_pos] = m_long_symbols.at(original_symbol).at(start_index);
-                }
-            }
-            else
-            {
-                ++symbol_pos;
-            }
-        }
+        ProcessReelStart(new_reel);
     }
     else
     {
-        for (size_t symbol_pos = original_reel.size() - 1; symbol_pos < original_reel.size();)
-        {
-            auto original_symbol = original_reel[symbol_pos];
-
-            if (IsLongSymbol(original_symbol))
-            {
-                const size_t symbol_length = GetPrevSymbolLength(original_reel, symbol_pos);
-                size_t start_index = m_long_symbols.at(original_symbol).size() - 1;
-
-                for (size_t count = 0; count < symbol_length && symbol_pos < original_reel.size(); --symbol_pos, ++count)
-                {
-                    new_reel[symbol_pos] = m_long_symbols.at(original_symbol).at(start_index);
-                    start_index = start_index == 0 ? m_long_symbols.at(original_symbol).size() - 1 : start_index - 1;
-                }
-
-                symbol_pos -= symbol_length - 1;
-            }
-            else
-            {
-                if (symbol_pos == 0)
-                {
-                    break;
-                }
-
-                --symbol_pos;
-            }
-        }
+        ProcessReelEnd(new_reel);
     }
 
-
     return new_reel;
+}
+
+void LongSymbolsNormalizer::ProcessReelStart(VCORE_Reels::Reel_t& reel) const
+{
+    for (size_t symbol_pos = 0; symbol_pos < reel.size();)
+    {
+        auto original_symbol = reel[symbol_pos];
+
+        if (IsLongSymbol(original_symbol))
+        {
+            const size_t symbol_length = GetSymbolLength(reel, symbol_pos);
+            size_t start_index = symbol_pos == 0 ? std::max(0, static_cast<int>(m_long_symbols.at(original_symbol).size() - symbol_length)) : 0;
+
+            for (size_t count = 0; count < symbol_length && symbol_pos < reel.size() && start_index < m_long_symbols.at(original_symbol).size(); ++symbol_pos, ++start_index, ++count)
+            {
+                reel[symbol_pos] = m_long_symbols.at(original_symbol).at(start_index);
+            }
+        }
+        else
+        {
+            ++symbol_pos;
+        }
+    }
+}
+
+void LongSymbolsNormalizer::ProcessReelEnd(VCORE_Reels::Reel_t& reel) const
+{
+    for (size_t symbol_pos = reel.size() - 1; symbol_pos < reel.size();)
+    {
+        auto original_symbol = reel[symbol_pos];
+
+        if (IsLongSymbol(original_symbol))
+        {
+            const size_t symbol_length = GetPrevSymbolLength(reel, symbol_pos);
+            size_t start_index = m_long_symbols.at(original_symbol).size() - 1;
+
+            for (size_t count = 0; count < symbol_length && symbol_pos < reel.size(); --symbol_pos, ++count)
+            {
+                reel[symbol_pos] = m_long_symbols.at(original_symbol).at(start_index);
+                start_index = start_index == 0 ? m_long_symbols.at(original_symbol).size() - 1 : start_index - 1;
+            }
+
+            symbol_pos -= symbol_length - 1;
+        }
+        else
+        {
+            if (symbol_pos == 0)
+            {
+                break;
+            }
+
+            --symbol_pos;
+        }
+    }
 }
 
 bool LongSymbolsNormalizer::HasLongSymbolOnReel(const VCORE_Reels::Reel_t& reel) const

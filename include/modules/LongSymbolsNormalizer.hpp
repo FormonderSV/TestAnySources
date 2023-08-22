@@ -138,7 +138,7 @@ namespace vcore
 
         bool IsPartOfLongSymbol(VCORE_Figure::Identity_t symbol_id) const;
 
-        VCORE_Reels::Reel_t GetLongSymbol(VCORE_Figure::Identity_t symbol_id) const;
+        VCORE_Reels::Reel_t GetLongSymbolFor(VCORE_Figure::Identity_t symbol_id) const;
 
     protected:
 
@@ -155,6 +155,10 @@ namespace vcore
         size_t GetPrevSymbolLength(const VCORE_Reels::Reel_t& reel, size_t start_pos) const;
 
         VCORE_Reels::Reel_t GenerateReelWithLongSymbols(const VCORE_Reels::Reel_t& original_reel) const;
+
+        void ProcessReelStart(VCORE_Reels::Reel_t& reel) const;
+
+        void ProcessReelEnd(VCORE_Reels::Reel_t& reel) const;
 
         bool HasLongSymbolOnReel(const VCORE_Reels::Reel_t& reel) const;
 
