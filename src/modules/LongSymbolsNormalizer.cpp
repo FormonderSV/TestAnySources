@@ -6,22 +6,13 @@
 using namespace vcore;
 
 LongSymbolsNormalizer::LongSymbolsNormalizer()
-    : m_rd{}
-    , m_gen{ m_rd() }
-    , m_distributor{ 0, std::numeric_limits<int>::max() }
+    : LongSymbolsNormalizer({}, {}, false)
 {
-
 }
 
 LongSymbolsNormalizer::LongSymbolsNormalizer(const LongSymbols_t& long_symbols, bool use_random_sequence)
-    : m_rd{}
-    , m_gen{ m_rd() }
-    , m_distributor{ 0, std::numeric_limits<int>::max() }
-    , m_long_symbols{ long_symbols }
-    , m_replace_symbols{}
-    , m_use_random_sequence{ use_random_sequence }
+    : LongSymbolsNormalizer(long_symbols, {}, use_random_sequence)
 {
-
 }
 
 LongSymbolsNormalizer::LongSymbolsNormalizer(const LongSymbols_t& long_symbols, const VCORE_Reels::Reel_t& replace_symbols, bool use_random_sequence)
@@ -32,31 +23,26 @@ LongSymbolsNormalizer::LongSymbolsNormalizer(const LongSymbols_t& long_symbols, 
     , m_replace_symbols{ replace_symbols }
     , m_use_random_sequence{ use_random_sequence }
 {
-
 }
 
-LongSymbolsNormalizer::LongSymbolsNormalizer(const LongSymbolsNormalizer& other)
-    : m_rd{}
-    , m_gen{ other.m_gen }
-    , m_distributor{ other.m_distributor }
-    , m_long_symbols{ other.m_long_symbols }
-    , m_replace_symbols{ other.m_replace_symbols }
-    , m_use_random_sequence{ other.m_use_random_sequence }
+LongSymbolsNormalizer::LongSymbolsNormalizer(const LongSymbolsNormalizer& rhs)
+    : LongSymbolsNormalizer(rhs.m_long_symbols, rhs.m_replace_symbols, rhs.m_use_random_sequence)
 {
-
+    m_gen = rhs.m_gen;
+    m_distributor = rhs.m_distributor;
 }
 
-LongSymbolsNormalizer& LongSymbolsNormalizer::operator=(const LongSymbolsNormalizer& other)
+LongSymbolsNormalizer& LongSymbolsNormalizer::operator=(const LongSymbolsNormalizer& rhs)
 {
-    if (this == &other)
+    if (this == &rhs)
     {
         return *this;
     }
 
-    m_distributor = other.m_distributor;
-    m_long_symbols = other.m_long_symbols;
-    m_replace_symbols = other.m_replace_symbols;
-    m_use_random_sequence = other.m_use_random_sequence;
+    m_distributor = rhs.m_distributor;
+    m_long_symbols = rhs.m_long_symbols;
+    m_replace_symbols = rhs.m_replace_symbols;
+    m_use_random_sequence = rhs.m_use_random_sequence;
 
     return *this;
 }

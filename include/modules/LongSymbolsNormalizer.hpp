@@ -74,7 +74,6 @@ namespace vcore
         RIGHT = 1,
     };
 
-
     class LongSymbolsNormalizer
     {
     public:
@@ -84,9 +83,9 @@ namespace vcore
 
         explicit LongSymbolsNormalizer(const LongSymbols_t& long_symbols, const VCORE_Reels::Reel_t& replace_symbols, bool use_random_sequence = false);
 
-        LongSymbolsNormalizer(const LongSymbolsNormalizer& other);
+        LongSymbolsNormalizer(const LongSymbolsNormalizer& rhs);
 
-        LongSymbolsNormalizer& operator=(const LongSymbolsNormalizer& other);
+        LongSymbolsNormalizer& operator=(const LongSymbolsNormalizer& rhs);
 
         // Modify Reels
         VCORE_Reels GetModifiedReels(const VCORE_Reels& original_reels) const;
