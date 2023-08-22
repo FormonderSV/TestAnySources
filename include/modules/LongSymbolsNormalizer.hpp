@@ -124,7 +124,7 @@ namespace vcore
 
         void ProcessRemainingSymbols(VCORE_Reels::Reel_t& reel, size_t& left_index, size_t& right_index) const;
 
-        void FinalizeReel(VCORE_Reels::Reel_t& reel) const;
+        void FinalizeTrueRolling(VCORE_Reels::Reel_t& reel) const;
 
         // Restore original reels
         VCORE_Reels GetOriginalReels(const VCORE_Reels& modified_reels) const;
@@ -166,9 +166,9 @@ namespace vcore
 
         VCORE_Reels::Reel_t GenerateReelWithLongSymbols(const VCORE_Reels::Reel_t& original_reel) const;
 
-        void ProcessReelStart(VCORE_Reels::Reel_t& reel) const;
+        void FillLeftEdgeLongSymbol(VCORE_Reels::Reel_t& reel) const;
 
-        void ProcessReelEnd(VCORE_Reels::Reel_t& reel) const;
+        void FillRightEdgeLongSymbol(VCORE_Reels::Reel_t& reel) const;
 
         bool HasLongSymbolOnReel(const VCORE_Reels::Reel_t& reel) const;
 

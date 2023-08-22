@@ -285,17 +285,13 @@ VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedTrueRolling(const VCORE_Re
     auto left_index = current_contents.size() - 2;
     auto right_index = reel.size() - 1;
 
-    // Обработка первого символа
     ProcessFirstSymbol(new_reel, current_contents, right_index);
 
-    // Обработка символа на позиции left_index
     ProcessSymbolAtPosition(new_reel, left_index);
 
-    // Обработка оставшихся символов
     ProcessRemainingSymbols(new_reel, left_index, right_index);
 
-    // Финальная обработка
-    FinalizeReel(new_reel);
+    FinalizeTrueRolling(new_reel);
 
     return new_reel;
 }
@@ -393,7 +389,7 @@ void LongSymbolsNormalizer::ProcessRemainingSymbols(VCORE_Reels::Reel_t& reel, s
     }
 }
 
-void LongSymbolsNormalizer::FinalizeReel(VCORE_Reels::Reel_t& reel) const
+void LongSymbolsNormalizer::FinalizeTrueRolling(VCORE_Reels::Reel_t& reel) const
 {
     const auto& long_symbol = GetLongSymbolFor(reel[1]);
     const auto symbol_length = GetSymbolLength(reel, 1);
@@ -630,17 +626,17 @@ VCORE_Reels::Reel_t LongSymbolsNormalizer::GenerateReelWithLongSymbols(const VCO
 
     if (IsPartOfLongSymbol(original_reel.back()))
     {
-        ProcessReelStart(new_reel);
+        FillLeftEdgeLongSymbol(new_reel);
     }
     else
     {
-        ProcessReelEnd(new_reel);
+        FillRightEdgeLongSymbol(new_reel);
     }
 
     return new_reel;
 }
 
-void LongSymbolsNormalizer::ProcessReelStart(VCORE_Reels::Reel_t& reel) const
+void LongSymbolsNormalizer::FillLeftEdgeLongSymbol(VCORE_Reels::Reel_t& reel) const
 {
     for (size_t symbol_pos = 0; symbol_pos < reel.size();)
     {
@@ -663,7 +659,7 @@ void LongSymbolsNormalizer::ProcessReelStart(VCORE_Reels::Reel_t& reel) const
     }
 }
 
-void LongSymbolsNormalizer::ProcessReelEnd(VCORE_Reels::Reel_t& reel) const
+void LongSymbolsNormalizer::FillRightEdgeLongSymbol(VCORE_Reels::Reel_t& reel) const
 {
     for (size_t symbol_pos = reel.size() - 1; symbol_pos < reel.size();)
     {
