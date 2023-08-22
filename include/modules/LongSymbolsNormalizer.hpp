@@ -102,7 +102,7 @@ namespace vcore
 
         size_t GetLongSymbolIndex(const VCORE_Reels::Reel_t& long_symbol, VCORE_Figure::Identity_t symbol_id) const;
 
-        void UpdateSymbolAtPosition(VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& long_symbols, size_t symbol_pos, bool is_next) const;
+        void UpdateSymbolAtPosition(VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& long_symbols, size_t symbol_pos, Direction_t direction) const;
 
         void UpdateReelWithLongSymbols(VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& long_symbols, size_t symbol_pos) const;
 
@@ -117,6 +117,14 @@ namespace vcore
         VCORE_Reels::Reel_t GetModifiedFakeRolling(const VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& current_contents) const;
 
         VCORE_Reels::Reel_t GetModifiedTrueRolling(const VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& current_contents) const;
+
+        void ProcessFirstSymbol(VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& current_contents, size_t& right_index) const;
+
+        void ProcessSymbolAtPosition(VCORE_Reels::Reel_t& reel, size_t& left_index) const;
+
+        void ProcessRemainingSymbols(VCORE_Reels::Reel_t& reel, size_t& left_index, size_t& right_index) const;
+
+        void FinalizeReel(VCORE_Reels::Reel_t& reel) const;
 
         // Restore original reels
         VCORE_Reels GetOriginalReels(const VCORE_Reels& modified_reels) const;
