@@ -103,6 +103,148 @@ VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedContents(const VCORE_Reels
     return new_reel;
 }
 
+VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedFakeRolling(const VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& current_contents) const
+{
+    VCORE_Reels::Reel_t new_reel = reel;
+    size_t left_index = current_contents.size() + 1;
+    size_t right_index = reel.size() - 1;
+
+    if (IsPartOfLongSymbol(current_contents.front()))
+    {
+        UpdateReelForFrontSymbol(new_reel, current_contents, left_index, right_index);
+    }
+
+    while (left_index <= right_index)
+    {
+        if (IsPartOfLongSymbol(reel[left_index]))
+        {
+            UpdateReelForOtherSymbols(new_reel, reel, left_index, right_index);
+        }
+        else
+        {
+            left_index++;
+        }
+    }
+
+    return new_reel;
+}
+
+VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedTrueRolling(const VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& current_contents) const
+{
+    VCORE_Reels::Reel_t new_reel = reel;
+    auto left_index = current_contents.size() - 2;
+    auto right_index = reel.size() - 1;
+
+    ProcessFirstSymbol(new_reel, current_contents, right_index);
+
+    ProcessSymbolAtPosition(new_reel, left_index);
+
+    ProcessRemainingSymbols(new_reel, left_index, right_index);
+
+    FinalizeTrueRolling(new_reel);
+
+    return new_reel;
+}
+
+
+VCORE_Reels LongSymbolsNormalizer::GetOriginalReels(const VCORE_Reels& modified_reels) const
+{
+    const auto& stop_matrix = GetOriginalMatrix(modified_reels.GetMatrix());
+    const auto& rolling_matrix = GetOriginalMatrix(modified_reels.GetRollingMatrix());
+    return { stop_matrix, rolling_matrix };
+}
+
+VCORE_Reels::Matrix_t LongSymbolsNormalizer::GetOriginalMatrix(const VCORE_Reels::Matrix_t& modified_matrix) const
+{
+    auto new_matrix = modified_matrix;
+    for (auto& reel : new_matrix)
+    {
+        reel = GetOriginalReel(reel);
+    }
+
+    return new_matrix;
+}
+
+VCORE_Reels::Reel_t LongSymbolsNormalizer::GetOriginalReel(const VCORE_Reels::Reel_t& modified_reel) const
+{
+    if (modified_reel.empty() || !HasLongSymbolOnReel(modified_reel))
+    {
+        return modified_reel;
+    }
+
+    VCORE_Reels::Reel_t new_reel = modified_reel;
+
+    for (auto& symbol_id : new_reel)
+    {
+        if (IsPartOfLongSymbol(symbol_id))
+        {
+            symbol_id = GetOriginalSymbolId(symbol_id);
+        }
+
+        // VCORE_ASSERT(symbol_id != DEFAULT_REEL_VALUE);
+    }
+
+    return new_reel;
+}
+
+const LongSymbols_t& LongSymbolsNormalizer::GetLongSymbols() const
+{
+    return m_long_symbols;
+}
+
+void LongSymbolsNormalizer::SetLongSymbols(const LongSymbols_t& long_symbols)
+{
+    m_long_symbols = long_symbols;
+}
+
+const VCORE_Reels::Reel_t& LongSymbolsNormalizer::GetReplaceSymbols() const
+{
+    return m_replace_symbols;
+}
+
+void LongSymbolsNormalizer::SetSymbolsForReplace(const VCORE_Reels::Reel_t& replace_symbols)
+{
+    m_replace_symbols = replace_symbols;
+}
+
+
+VCORE_Game::Figures_t LongSymbolsNormalizer::GetAdditionalPayTableSymbols(const VCORE_Game::Figures_t& current_symbols) const
+{
+    VCORE_Game::Figures_t additional_symbols;
+
+    for (const auto& long_symbol : GetLongSymbols())
+    {
+        auto it = std::find_if(current_symbols.begin(), current_symbols.end(), [=](const auto& figure) {
+            return figure.GetIdentity() == long_symbol.first;
+            });
+
+        if (it == std::end(current_symbols))
+        {
+            // LOG_WARNING("LongSymbolsNormalizer.GetAdditionalPayTableSymbols. can't find server figure id: %d", std::to_string(long_symbol.first));
+            continue;
+        }
+
+        const auto& server_figure = *it;
+
+        for (const auto& replace_id : long_symbol.second)
+        {
+            std::vector<unsigned int> pay_table;
+
+            const auto& pay_table_size = server_figure.GetPayTableSize() + 1;
+            for (size_t pay_index = 0; pay_index < pay_table_size; ++pay_index)
+            {
+                auto pay = server_figure.GetPayment(pay_index);
+                pay_table.emplace_back(pay);
+            }
+
+            const auto client_figure = VCORE_Figure(replace_id, pay_table, server_figure.GetMask());
+            additional_symbols.emplace_back(client_figure);
+        }
+    }
+
+    return additional_symbols;
+}
+
 void LongSymbolsNormalizer::HandleSymbolModification(VCORE_Reels::Reel_t& new_reel, size_t symbol_pos) const
 {
     const auto long_symbols = GetLongSymbolFor(new_reel[symbol_pos]);
@@ -253,49 +395,6 @@ void LongSymbolsNormalizer::ReplaceOrExtendLongSymbol(VCORE_Reels::Reel_t& new_r
     }
 }
 
-VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedFakeRolling(const VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& current_contents) const
-{
-    VCORE_Reels::Reel_t new_reel = reel;
-    size_t left_index = current_contents.size() + 1;
-    size_t right_index = reel.size() - 1;
-
-    if (IsPartOfLongSymbol(current_contents.front()))
-    {
-        UpdateReelForFrontSymbol(new_reel, current_contents, left_index, right_index);
-    }
-
-    while (left_index <= right_index)
-    {
-        if (IsPartOfLongSymbol(reel[left_index]))
-        {
-            UpdateReelForOtherSymbols(new_reel, reel, left_index, right_index);
-        }
-        else
-        {
-            left_index++;
-        }
-    }
-
-    return new_reel;
-}
-
-VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedTrueRolling(const VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& current_contents) const
-{
-    VCORE_Reels::Reel_t new_reel = reel;
-    auto left_index = current_contents.size() - 2;
-    auto right_index = reel.size() - 1;
-
-    ProcessFirstSymbol(new_reel, current_contents, right_index);
-
-    ProcessSymbolAtPosition(new_reel, left_index);
-
-    ProcessRemainingSymbols(new_reel, left_index, right_index);
-
-    FinalizeTrueRolling(new_reel);
-
-    return new_reel;
-}
-
 void LongSymbolsNormalizer::ProcessFirstSymbol(VCORE_Reels::Reel_t& reel, const VCORE_Reels::Reel_t& current_contents, size_t& right_index) const
 {
     if (IsPartOfLongSymbol(current_contents.front()))
@@ -409,103 +508,6 @@ void LongSymbolsNormalizer::FinalizeTrueRolling(VCORE_Reels::Reel_t& reel) const
     }
 }
 
-VCORE_Reels LongSymbolsNormalizer::GetOriginalReels(const VCORE_Reels& modified_reels) const
-{
-    const auto& stop_matrix = GetOriginalMatrix(modified_reels.GetMatrix());
-    const auto& rolling_matrix = GetOriginalMatrix(modified_reels.GetRollingMatrix());
-    return { stop_matrix, rolling_matrix };
-}
-
-VCORE_Reels::Matrix_t LongSymbolsNormalizer::GetOriginalMatrix(const VCORE_Reels::Matrix_t& modified_matrix) const
-{
-    auto new_matrix = modified_matrix;
-    for (auto& reel : new_matrix)
-    {
-        reel = GetOriginalReel(reel);
-    }
-
-    return new_matrix;
-}
-
-VCORE_Reels::Reel_t LongSymbolsNormalizer::GetOriginalReel(const VCORE_Reels::Reel_t& modified_reel) const
-{
-    if (modified_reel.empty() || !HasLongSymbolOnReel(modified_reel))
-    {
-        return modified_reel;
-    }
-
-    VCORE_Reels::Reel_t new_reel = modified_reel;
-
-    for (auto& symbol_id : new_reel)
-    {
-        if (IsPartOfLongSymbol(symbol_id))
-        {
-            symbol_id = GetOriginalSymbolId(symbol_id);
-        }
-
-        // VCORE_ASSERT(symbol_id != DEFAULT_REEL_VALUE);
-    }
-
-    return new_reel;
-}
-
-void LongSymbolsNormalizer::SetLongSymbols(const LongSymbols_t& long_symbols)
-{
-    m_long_symbols = long_symbols;
-}
-
-void LongSymbolsNormalizer::SetSymbolsForReplace(const VCORE_Reels::Reel_t& replace_symbols)
-{
-    m_replace_symbols = replace_symbols;
-}
-
-const LongSymbols_t& LongSymbolsNormalizer::GetLongSymbols() const
-{
-    return m_long_symbols;
-}
-
-const VCORE_Reels::Reel_t& LongSymbolsNormalizer::GetReplaceSymbols() const
-{
-    return m_replace_symbols;
-}
-
-VCORE_Game::Figures_t LongSymbolsNormalizer::GetAdditionalPayTableSymbols(const VCORE_Game::Figures_t& current_symbols) const
-{
-    VCORE_Game::Figures_t additional_symbols;
-
-    for (const auto& long_symbol : GetLongSymbols())
-    {
-        auto it = std::find_if(current_symbols.begin(), current_symbols.end(), [=](const auto& figure) {
-            return figure.GetIdentity() == long_symbol.first;
-            });
-
-        if (it == std::end(current_symbols))
-        {
-            // LOG_WARNING("LongSymbolsNormalizer.GetAdditionalPayTableSymbols. can't find server figure id: %d", std::to_string(long_symbol.first));
-            continue;
-        }
-
-        const auto& server_figure = *it;
-
-        for (const auto& replace_id : long_symbol.second)
-        {
-            std::vector<unsigned int> pay_table;
-
-            const auto& pay_table_size = server_figure.GetPayTableSize() + 1;
-            for (size_t pay_index = 0; pay_index < pay_table_size; ++pay_index)
-            {
-                auto pay = server_figure.GetPayment(pay_index);
-                pay_table.emplace_back(pay);
-            }
-
-            const auto client_figure = VCORE_Figure(replace_id, pay_table, server_figure.GetMask());
-            additional_symbols.emplace_back(client_figure);
-        }
-    }
-
-    return additional_symbols;
-}
-
 bool LongSymbolsNormalizer::IsPartOfLongSymbol(VCORE_Figure::Identity_t symbol_id) const
 {
     for (const auto& pair : m_long_symbols)
@@ -566,13 +568,19 @@ bool LongSymbolsNormalizer::IsPrevSymbolSame(const VCORE_Reels::Reel_t& reel, si
 bool LongSymbolsNormalizer::IsAdjacentSymbolPartOfSameLongSymbol(const VCORE_Reels::Reel_t& reel, size_t pos, Direction_t direction) const
 {
     if (!(direction == Direction_t::LEFT || direction == Direction_t::RIGHT))
+    {
         return false;
+    }
 
     if (direction == Direction_t::RIGHT && pos + 1 >= reel.size())
+    {
         return false;
+    }
 
     if (direction == Direction_t::LEFT && pos == 0)
+    {
         return false;
+    }
 
     const auto adjacent_pos = pos + static_cast<int>(direction);
     for (const auto& pair : m_long_symbols)
