@@ -13,26 +13,52 @@ LongSymbolsNormalizer::LongSymbolsNormalizer()
 
 }
 
-LongSymbolsNormalizer::LongSymbolsNormalizer(const LongSymbols_t& long_symbols, bool use_random)
+LongSymbolsNormalizer::LongSymbolsNormalizer(const LongSymbols_t& long_symbols, bool use_random_sequence)
     : m_rd{}
     , m_gen{ m_rd() }
     , m_distributor{ 0, std::numeric_limits<int>::max() }
     , m_long_symbols{ long_symbols }
     , m_replace_symbols{}
-    , m_use_random{ use_random }
+    , m_use_random_sequence{ use_random_sequence }
 {
 
 }
 
-LongSymbolsNormalizer::LongSymbolsNormalizer(const LongSymbols_t& long_symbols, const VCORE_Reels::Reel_t& replace_symbols, bool use_random)
+LongSymbolsNormalizer::LongSymbolsNormalizer(const LongSymbols_t& long_symbols, const VCORE_Reels::Reel_t& replace_symbols, bool use_random_sequence)
     : m_rd{}
     , m_gen{ m_rd() }
     , m_distributor{ 0, std::numeric_limits<int>::max() }
     , m_long_symbols{ long_symbols }
     , m_replace_symbols{ replace_symbols }
-    , m_use_random{ use_random }
+    , m_use_random_sequence{ use_random_sequence }
 {
 
+}
+
+LongSymbolsNormalizer::LongSymbolsNormalizer(const LongSymbolsNormalizer& other)
+    : m_rd{}
+    , m_gen{ other.m_gen }
+    , m_distributor{ other.m_distributor }
+    , m_long_symbols{ other.m_long_symbols }
+    , m_replace_symbols{ other.m_replace_symbols }
+    , m_use_random_sequence{ other.m_use_random_sequence }
+{
+
+}
+
+LongSymbolsNormalizer& LongSymbolsNormalizer::operator=(const LongSymbolsNormalizer& other)
+{
+    if (this == &other)
+    {
+        return *this;
+    }
+
+    m_distributor = other.m_distributor;
+    m_long_symbols = other.m_long_symbols;
+    m_replace_symbols = other.m_replace_symbols;
+    m_use_random_sequence = other.m_use_random_sequence;
+
+    return *this;
 }
 
 VCORE_Reels LongSymbolsNormalizer::GetModifiedReels(const VCORE_Reels& original_reels) const
@@ -509,7 +535,7 @@ VCORE_Reels::Reel_t LongSymbolsNormalizer::GenerateRandomReel(int symbol_id, siz
     {
         const auto& long_symbol = long_symbol_it->second;
 
-        int random_index = m_use_random ? GenerateRandomNumberWithinRange(long_symbol.size() - 1) : 0;
+        int random_index = m_use_random_sequence ? GenerateRandomNumberWithinRange(long_symbol.size() - 1) : 0;
 
         for (int& i : new_reel)
         {
@@ -582,7 +608,7 @@ VCORE_Reels::Reel_t LongSymbolsNormalizer::GenerateReelWithLongSymbols(const VCO
 {
     VCORE_Reels::Reel_t new_reel = original_reel;
 
-    if(IsLongSymbol(original_reel[original_reel.size() - 1]))
+    if (IsLongSymbol(original_reel[original_reel.size() - 1]))
     {
         for (size_t symbol_pos = 0; symbol_pos < original_reel.size();)
         {
@@ -620,7 +646,7 @@ VCORE_Reels::Reel_t LongSymbolsNormalizer::GenerateReelWithLongSymbols(const VCO
                     new_reel[symbol_pos] = m_long_symbols.at(original_symbol).at(start_index);
                     start_index = start_index == 0 ? m_long_symbols.at(original_symbol).size() - 1 : start_index - 1;
                 }
-                
+
                 symbol_pos -= symbol_length - 1;
             }
             else
@@ -700,4 +726,9 @@ int LongSymbolsNormalizer::GenerateRandomNumberWithinRange(size_t max_value) con
 {
     m_distributor.param(std::uniform_int_distribution<int>::param_type(0, static_cast<int>(max_value)));
     return m_distributor(m_gen);
+}
+
+bool LongSymbolsNormalizer::IsUseRandomSequence() const
+{
+    return m_use_random_sequence;
 }

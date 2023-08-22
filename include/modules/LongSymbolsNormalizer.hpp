@@ -74,14 +74,19 @@ namespace vcore
         RIGHT = 1,
     };
 
+
     class LongSymbolsNormalizer
     {
     public:
         LongSymbolsNormalizer();
 
-        explicit LongSymbolsNormalizer(const LongSymbols_t& long_symbols, bool use_random = false);
+        explicit LongSymbolsNormalizer(const LongSymbols_t& long_symbols, bool use_random_sequence = false);
 
-        explicit LongSymbolsNormalizer(const LongSymbols_t& long_symbols, const VCORE_Reels::Reel_t& replace_symbols, bool use_random = false);
+        explicit LongSymbolsNormalizer(const LongSymbols_t& long_symbols, const VCORE_Reels::Reel_t& replace_symbols, bool use_random_sequence = false);
+
+        LongSymbolsNormalizer(const LongSymbolsNormalizer& other);
+
+        LongSymbolsNormalizer& operator=(const LongSymbolsNormalizer& other);
 
         // Modify Reels
         VCORE_Reels GetModifiedReels(const VCORE_Reels& original_reels) const;
@@ -166,13 +171,15 @@ namespace vcore
 
         int GenerateRandomNumberWithinRange(size_t max_value) const;
 
+        bool IsUseRandomSequence() const;
+
     private:
         mutable std::random_device m_rd;
         mutable std::mt19937 m_gen;
         mutable std::uniform_int_distribution<int> m_distributor;
         LongSymbols_t m_long_symbols;
         VCORE_Reels::Reel_t m_replace_symbols{};
-        bool m_use_random{ false };
+        bool m_use_random_sequence{ false };
         static constexpr int DEFAULT_REEL_VALUE = -1;
     };
 }
