@@ -522,7 +522,7 @@ VCORE_Reels::Reel_t LongSymbolsNormalizer::GenerateRandomReel(int symbol_id, siz
     {
         const auto& long_symbol = long_symbol_it->second;
 
-        int random_index = IsUseRandomSequence() ? GenerateRandomNumber(long_symbol.size() - 1) : 0;
+        int random_index = UsesRandomSequence() ? GenerateRandomNumber(long_symbol.size() - 1) : 0;
 
         for (int& i : new_reel)
         {
@@ -613,7 +613,7 @@ void LongSymbolsNormalizer::ProcessReelStart(VCORE_Reels::Reel_t& reel) const
     {
         auto original_symbol = reel[symbol_pos];
 
-        if (IsLongSymbol(original_symbol))
+        if (IsLongSymbolDefined(original_symbol))
         {
             const size_t symbol_length = GetSymbolLength(reel, symbol_pos);
             size_t start_index = symbol_pos == 0 ? std::max(0, static_cast<int>(m_long_symbols.at(original_symbol).size() - symbol_length)) : 0;
@@ -636,7 +636,7 @@ void LongSymbolsNormalizer::ProcessReelEnd(VCORE_Reels::Reel_t& reel) const
     {
         auto original_symbol = reel[symbol_pos];
 
-        if (IsLongSymbol(original_symbol))
+        if (IsLongSymbolDefined(original_symbol))
         {
             const size_t symbol_length = GetPrevSymbolLength(reel, symbol_pos);
             size_t start_index = m_long_symbols.at(original_symbol).size() - 1;
@@ -664,11 +664,11 @@ void LongSymbolsNormalizer::ProcessReelEnd(VCORE_Reels::Reel_t& reel) const
 bool LongSymbolsNormalizer::HasLongSymbolOnReel(const VCORE_Reels::Reel_t& reel) const
 {
     return std::any_of(cbegin(reel), cend(reel), [&](auto symbol_id) {
-        return IsLongSymbol(symbol_id) || IsPartOfLongSymbol(symbol_id);
+        return IsLongSymbolDefined(symbol_id) || IsPartOfLongSymbol(symbol_id);
         });
 }
 
-bool LongSymbolsNormalizer::IsLongSymbol(VCORE_Figure::Identity_t symbol_id) const
+bool LongSymbolsNormalizer::IsLongSymbolDefined(VCORE_Figure::Identity_t symbol_id) const
 {
     return m_long_symbols.find(symbol_id) != m_long_symbols.end();
 }
@@ -718,7 +718,7 @@ int LongSymbolsNormalizer::GenerateRandomNumber(size_t max_value, const VCORE_Re
     return symbols.empty() ? index : symbols[index];
 }
 
-bool LongSymbolsNormalizer::IsUseRandomSequence() const
+bool LongSymbolsNormalizer::UsesRandomSequence() const
 {
     return m_use_random_sequence;
 }

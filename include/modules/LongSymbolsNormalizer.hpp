@@ -162,7 +162,7 @@ namespace vcore
 
         bool HasLongSymbolOnReel(const VCORE_Reels::Reel_t& reel) const;
 
-        bool IsLongSymbol(VCORE_Figure::Identity_t symbol_id) const;
+        bool IsLongSymbolDefined(VCORE_Figure::Identity_t symbol_id) const;
 
         bool IsCompleteSymbol(VCORE_Figure::Identity_t symbol_id, size_t length) const;
 
@@ -170,9 +170,9 @@ namespace vcore
 
         bool IsEqualAllId(const VCORE_Reels::Reel_t& reel) const;
 
-        int LongSymbolsNormalizer::GenerateRandomNumber(size_t max_value, const VCORE_Reels::Reel_t& symbols = {}) const;
+        int GenerateRandomNumber(size_t max_value, const VCORE_Reels::Reel_t& symbols = {}) const;
 
-        bool IsUseRandomSequence() const;
+        bool UsesRandomSequence() const;
 
     private:
         mutable std::random_device m_rd;
