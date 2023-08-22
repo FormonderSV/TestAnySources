@@ -170,9 +170,7 @@ namespace vcore
 
         bool IsEqualAllId(const VCORE_Reels::Reel_t& reel) const;
 
-        VCORE_Figure::Identity_t GetRandomReplaceSymbol() const;
-
-        int GenerateRandomNumberWithinRange(size_t max_value) const;
+        int LongSymbolsNormalizer::GenerateRandomNumber(size_t max_value, const VCORE_Reels::Reel_t& symbols = {}) const;
 
         bool IsUseRandomSequence() const;
 

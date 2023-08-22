@@ -229,7 +229,7 @@ void LongSymbolsNormalizer::ReplaceWithRandomSymbols(VCORE_Reels::Reel_t& new_re
     const size_t end_pos = left_index + symbol_length;
     for (; left_index <= right_index && left_index < end_pos; ++left_index)
     {
-        new_reel[left_index] = GetRandomReplaceSymbol();
+        new_reel[left_index] = GenerateRandomNumber(m_replace_symbols.size() - 1, m_replace_symbols);
     }
 }
 
@@ -247,7 +247,7 @@ void LongSymbolsNormalizer::ReplaceOrExtendLongSymbol(VCORE_Reels::Reel_t& new_r
     {
         for (; left_index <= right_index; ++left_index)
         {
-            new_reel[left_index] = GetRandomReplaceSymbol();
+            new_reel[left_index] = GenerateRandomNumber(m_replace_symbols.size() - 1, m_replace_symbols);
         }
     }
 }
@@ -334,7 +334,7 @@ VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedTrueRolling(const VCORE_Re
 
                 for (; left_index <= right_index && left_index < end_pos; ++left_index)
                 {
-                    new_reel[left_index] = GetRandomReplaceSymbol();
+                    new_reel[left_index] = GenerateRandomNumber(m_replace_symbols.size() - 1, m_replace_symbols);
                 }
             }
             else if (symbol_length != long_symbol.size())
@@ -351,7 +351,7 @@ VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedTrueRolling(const VCORE_Re
                 {
                     for (; left_index <= right_index; ++left_index)
                     {
-                        new_reel[left_index] = GetRandomReplaceSymbol();
+                        new_reel[left_index] = GenerateRandomNumber(m_replace_symbols.size() - 1, m_replace_symbols);
                     }
                 }
             }
@@ -522,7 +522,7 @@ VCORE_Reels::Reel_t LongSymbolsNormalizer::GenerateRandomReel(int symbol_id, siz
     {
         const auto& long_symbol = long_symbol_it->second;
 
-        int random_index = m_use_random_sequence ? GenerateRandomNumberWithinRange(long_symbol.size() - 1) : 0;
+        int random_index = IsUseRandomSequence() ? GenerateRandomNumber(long_symbol.size() - 1) : 0;
 
         for (int& i : new_reel)
         {
@@ -711,17 +711,11 @@ bool LongSymbolsNormalizer::IsEqualAllId(const VCORE_Reels::Reel_t& reel) const
     return std::all_of(cbegin(original_reel), cend(original_reel), [first_symbol_id = original_reel.front()](int symbol_id) { return symbol_id == first_symbol_id; });
 }
 
-VCORE_Figure::Identity_t LongSymbolsNormalizer::GetRandomReplaceSymbol() const
-{
-    assert(m_replace_symbols.size() > 0);
-    const auto index = GenerateRandomNumberWithinRange(m_replace_symbols.size() - 1);
-    return m_replace_symbols[index];
-}
-
-int LongSymbolsNormalizer::GenerateRandomNumberWithinRange(size_t max_value) const
+int LongSymbolsNormalizer::GenerateRandomNumber(size_t max_value, const VCORE_Reels::Reel_t& symbols) const
 {
     m_distributor.param(std::uniform_int_distribution<int>::param_type(0, static_cast<int>(max_value)));
-    return m_distributor(m_gen);
+    const int index = m_distributor(m_gen);
+    return symbols.empty() ? index : symbols[index];
 }
 
 bool LongSymbolsNormalizer::IsUseRandomSequence() const
