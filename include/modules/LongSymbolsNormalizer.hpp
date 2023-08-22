@@ -150,9 +150,11 @@ namespace vcore
 
         bool IsAdjacentSymbolPartOfSameLongSymbol(const VCORE_Reels::Reel_t& reel, size_t pos, Direction_t direction) const;
 
-        size_t GetSymbolLength(const VCORE_Reels::Reel_t& reel, size_t start_pos) const;
+        VCORE_Figure::Identity_t GetAdjacentSymbol(const VCORE_Reels::Reel_t& reel, size_t pos, Direction_t direction) const;
 
-        size_t GetPrevSymbolLength(const VCORE_Reels::Reel_t& reel, size_t start_pos) const;
+        bool IsAdjacentSymbolSame(const VCORE_Reels::Reel_t& reel, size_t pos, Direction_t direction) const;
+
+        size_t GetSymbolLength(const VCORE_Reels::Reel_t& reel, size_t pos, Direction_t direction = Direction_t::RIGHT) const;
 
         VCORE_Reels::Reel_t GenerateReelWithLongSymbols(const VCORE_Reels::Reel_t& original_reel) const;
 

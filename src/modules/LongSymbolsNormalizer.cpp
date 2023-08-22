@@ -130,7 +130,7 @@ void LongSymbolsNormalizer::UpdateSymbolAtPosition(VCORE_Reels::Reel_t& reel, co
         return;
     }
 
-    const size_t symbol_length = is_next ? GetSymbolLength(reel, adjacent_pos) : GetPrevSymbolLength(reel, adjacent_pos);
+    const size_t symbol_length = is_next ? GetSymbolLength(reel, adjacent_pos) : GetSymbolLength(reel, adjacent_pos, Direction_t::LEFT);
 
     if (!adjacent_long_symbols.empty())
     {
@@ -569,24 +569,33 @@ bool LongSymbolsNormalizer::IsAdjacentSymbolPartOfSameLongSymbol(const VCORE_Ree
     return false;
 }
 
-size_t LongSymbolsNormalizer::GetSymbolLength(const VCORE_Reels::Reel_t& reel, size_t start_pos) const
+VCORE_Figure::Identity_t LongSymbolsNormalizer::GetAdjacentSymbol(const VCORE_Reels::Reel_t& reel, size_t pos, Direction_t direction) const
 {
-    size_t length = 1;
-    while (IsNextSymbolSame(reel, start_pos) || IsAdjacentSymbolPartOfSameLongSymbol(reel, start_pos, Direction_t::RIGHT))
+    if (direction == Direction_t::LEFT && pos > 0) 
     {
-        ++length;
-        ++start_pos;
+        return reel[pos - 1];
     }
-    return length;
+
+    if (direction == Direction_t::RIGHT && pos + 1 < reel.size()) 
+    {
+        return reel[pos + 1];
+    }
+    return DEFAULT_REEL_VALUE;
 }
 
-size_t LongSymbolsNormalizer::GetPrevSymbolLength(const VCORE_Reels::Reel_t& reel, size_t start_pos) const
+bool LongSymbolsNormalizer::IsAdjacentSymbolSame(const VCORE_Reels::Reel_t& reel, size_t pos, Direction_t direction) const
+{
+    const auto adjacent_symbol = GetAdjacentSymbol(reel, pos, direction);
+    return adjacent_symbol != DEFAULT_REEL_VALUE && adjacent_symbol == reel[pos];
+}
+
+size_t LongSymbolsNormalizer::GetSymbolLength(const VCORE_Reels::Reel_t& reel, size_t pos, Direction_t direction) const
 {
     size_t length = 1;
-    while (IsPrevSymbolSame(reel, start_pos) || IsAdjacentSymbolPartOfSameLongSymbol(reel, start_pos, Direction_t::LEFT))
+    while (IsAdjacentSymbolSame(reel, pos, direction) || IsAdjacentSymbolPartOfSameLongSymbol(reel, pos, direction)) 
     {
-        ++length;
-        --start_pos;
+        length++;
+        pos += static_cast<int>(direction);
     }
     return length;
 }
@@ -638,7 +647,7 @@ void LongSymbolsNormalizer::ProcessReelEnd(VCORE_Reels::Reel_t& reel) const
 
         if (IsLongSymbolDefined(original_symbol))
         {
-            const size_t symbol_length = GetPrevSymbolLength(reel, symbol_pos);
+            const size_t symbol_length = GetSymbolLength(reel, symbol_pos, Direction_t::LEFT);
             size_t start_index = m_long_symbols.at(original_symbol).size() - 1;
 
             for (size_t count = 0; count < symbol_length && symbol_pos < reel.size(); --symbol_pos, ++count)
