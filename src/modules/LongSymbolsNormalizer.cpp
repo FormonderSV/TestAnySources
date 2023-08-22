@@ -258,14 +258,14 @@ VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedFakeRolling(const VCORE_Re
     size_t left_index = current_contents.size() + 1;
     size_t right_index = reel.size() - 1;
 
-    if (IsSymbolPartOfLongSymbol(current_contents.front()))
+    if (IsPartOfLongSymbol(current_contents.front()))
     {
         UpdateReelForFrontSymbol(new_reel, current_contents, left_index, right_index);
     }
 
     while (left_index <= right_index)
     {
-        if (IsSymbolPartOfLongSymbol(reel[left_index]))
+        if (IsPartOfLongSymbol(reel[left_index]))
         {
             UpdateReelForOtherSymbols(new_reel, reel, left_index, right_index);
         }
@@ -286,7 +286,7 @@ VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedTrueRolling(const VCORE_Re
     auto left_index = current_contents.size() - 2;
     auto right_index = reel.size() - 1;
 
-    if (IsSymbolPartOfLongSymbol(current_contents.front()))
+    if (IsPartOfLongSymbol(current_contents.front()))
     {
         const auto& long_symbol = GetLongSymbol(current_contents.front());
         const auto symbol_length = GetSymbolLength(current_contents, 0);
@@ -303,7 +303,7 @@ VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedTrueRolling(const VCORE_Re
         }
     }
 
-    if (IsSymbolPartOfLongSymbol(new_reel[left_index]))
+    if (IsPartOfLongSymbol(new_reel[left_index]))
     {
         const auto& long_symbol = GetLongSymbol(new_reel[left_index]);
         const auto symbol_length = GetSymbolLength(new_reel, left_index);
@@ -322,7 +322,7 @@ VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedTrueRolling(const VCORE_Re
 
     while (left_index <= right_index)
     {
-        if (IsSymbolPartOfLongSymbol(new_reel[left_index]))
+        if (IsPartOfLongSymbol(new_reel[left_index]))
         {
             const auto& long_symbol = GetLongSymbol(reel[left_index]);
             const auto symbol_length = GetSymbolLength(new_reel, left_index);
@@ -373,7 +373,7 @@ VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedTrueRolling(const VCORE_Re
     const auto& long_symbol = GetLongSymbol(new_reel[1]);
     const auto symbol_length = GetSymbolLength(new_reel, 1);
 
-    if (IsSymbolPartOfLongSymbol(new_reel[1]) && long_symbol.size() != symbol_length)
+    if (IsPartOfLongSymbol(new_reel[1]) && long_symbol.size() != symbol_length)
     {
         if (!IsAdjacentSymbolPartOfSameLongSymbol(new_reel, 1, Direction_t::LEFT))
         {
@@ -381,7 +381,7 @@ VCORE_Reels::Reel_t LongSymbolsNormalizer::GetModifiedTrueRolling(const VCORE_Re
             new_reel[0] = (index == 0) ? long_symbol.back() : long_symbol[index - 1];
         }
     }
-    else if (IsSymbolPartOfLongSymbol(new_reel[0]))
+    else if (IsPartOfLongSymbol(new_reel[0]))
     {
         const auto& first_long_symbol = GetLongSymbol(new_reel[0]);
         new_reel[0] = first_long_symbol[first_long_symbol.size() - 1];
@@ -419,7 +419,7 @@ VCORE_Reels::Reel_t LongSymbolsNormalizer::GetOriginalReel(const VCORE_Reels::Re
 
     for (auto& symbol_id : new_reel)
     {
-        if (IsSymbolPartOfLongSymbol(symbol_id))
+        if (IsPartOfLongSymbol(symbol_id))
         {
             symbol_id = GetOriginalSymbolId(symbol_id);
         }
@@ -487,15 +487,16 @@ VCORE_Game::Figures_t LongSymbolsNormalizer::GetAdditionalPayTableSymbols(const 
     return additional_symbols;
 }
 
-bool LongSymbolsNormalizer::IsSymbolPartOfLongSymbol(VCORE_Figure::Identity_t symbol_id) const
+bool LongSymbolsNormalizer::IsPartOfLongSymbol(VCORE_Figure::Identity_t symbol_id) const
 {
-    for (const auto& pair : m_long_symbols)
+    for (const auto& pair : m_long_symbols) 
     {
-        if (std::find(pair.second.begin(), pair.second.end(), symbol_id) != pair.second.end())
+        if (symbol_id == pair.first || std::find(pair.second.begin(), pair.second.end(), symbol_id) != pair.second.end()) 
         {
             return true;
         }
     }
+
     return false;
 }
 
@@ -654,7 +655,7 @@ VCORE_Reels::Reel_t LongSymbolsNormalizer::GenerateReelWithLongSymbols(const VCO
 bool LongSymbolsNormalizer::HasLongSymbolOnReel(const VCORE_Reels::Reel_t& reel) const
 {
     return std::any_of(cbegin(reel), cend(reel), [&](auto symbol_id) {
-        return IsLongSymbol(symbol_id) || IsSymbolPartOfLongSymbol(symbol_id);
+        return IsLongSymbol(symbol_id) || IsPartOfLongSymbol(symbol_id);
         });
 }
 

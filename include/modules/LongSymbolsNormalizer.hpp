@@ -136,7 +136,7 @@ namespace vcore
 
         VCORE_Game::Figures_t GetAdditionalPayTableSymbols(const VCORE_Game::Figures_t& current_symbols) const;
 
-        bool IsSymbolPartOfLongSymbol(VCORE_Figure::Identity_t symbol_id) const;
+        bool IsPartOfLongSymbol(VCORE_Figure::Identity_t symbol_id) const;
 
         VCORE_Reels::Reel_t GetLongSymbol(VCORE_Figure::Identity_t symbol_id) const;
 
