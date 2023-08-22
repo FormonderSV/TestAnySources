@@ -143,17 +143,17 @@ void LongSymbolsNormalizer::UpdateSymbolAtPosition(VCORE_Reels::Reel_t& reel, co
             return;
         }
 
-        const size_t index = GetAdjacentIndex(adjacent_long_symbols, reel, adjacent_pos);
+        const size_t adjacent_index = GetAdjacentIndex(adjacent_long_symbols, reel, adjacent_pos);
 
         if (adjacent_long_symbols.size() != symbol_length)
         {
             if (is_right_direction)
             {
-                reel[symbol_pos] = (index == 0) ? adjacent_long_symbols.back() : adjacent_long_symbols[index - 1];
+                reel[symbol_pos] = (adjacent_index == 0) ? adjacent_long_symbols.back() : adjacent_long_symbols[adjacent_index - 1];
             }
             else
             {
-                reel[symbol_pos] = (index == adjacent_long_symbols.size() - 1) ? adjacent_long_symbols.front() : adjacent_long_symbols[index + 1];
+                reel[symbol_pos] = (adjacent_index == adjacent_long_symbols.size() - 1) ? adjacent_long_symbols.front() : adjacent_long_symbols[adjacent_index + 1];
             }
 
             return;
@@ -162,8 +162,8 @@ void LongSymbolsNormalizer::UpdateSymbolAtPosition(VCORE_Reels::Reel_t& reel, co
 
     if (long_symbols == adjacent_long_symbols)
     {
-        const size_t index = GetAdjacentIndex(long_symbols, reel, adjacent_pos);
-        reel[symbol_pos] = (is_right_direction && index == 0) ? long_symbols.back() : long_symbols[index - 1 + is_right_direction];
+        const size_t adjacent_index = GetAdjacentIndex(long_symbols, reel, adjacent_pos);
+        reel[symbol_pos] = (is_right_direction && adjacent_index == 0) ? long_symbols.back() : long_symbols[adjacent_index - 1 + is_right_direction];
         return;
     }
 
@@ -189,20 +189,20 @@ void LongSymbolsNormalizer::UpdateReelForFrontSymbol(VCORE_Reels::Reel_t& new_re
 {
     const auto& long_symbol = GetLongSymbolFor(current_contents.front());
     const auto symbol_length = GetSymbolLength(current_contents, 0);
-    const auto index = GetLongSymbolIndex(long_symbol, current_contents.front());
+    const auto long_symbol_index = GetLongSymbolIndex(long_symbol, current_contents.front());
 
     if (symbol_length == long_symbol.size())
     {
         return;
     }
 
-    for (int i = static_cast<int>(index) - 1; i >= 0; --i)
+    for (int i = static_cast<int>(long_symbol_index) - 1; i >= 0; --i)
     {
         new_reel[right_index] = long_symbol[i];
         --right_index;
     }
 
-    for (int i = static_cast<int>(index); i < static_cast<int>(long_symbol.size()); ++i)
+    for (int i = static_cast<int>(long_symbol_index); i < static_cast<int>(long_symbol.size()); ++i)
     {
         new_reel[left_index] = long_symbol[i];
         ++left_index;
@@ -305,9 +305,9 @@ void LongSymbolsNormalizer::ProcessFirstSymbol(VCORE_Reels::Reel_t& reel, const 
 
         if (symbol_length != long_symbol.size())
         {
-            const auto index = GetLongSymbolIndex(long_symbol, current_contents.front());
+            const auto long_symbol_index = GetLongSymbolIndex(long_symbol, current_contents.front());
 
-            for (int i = static_cast<int>(index) - 1; i >= 0; --i)
+            for (int i = static_cast<int>(long_symbol_index) - 1; i >= 0; --i)
             {
                 reel[right_index] = long_symbol[i];
                 --right_index;
@@ -325,9 +325,9 @@ void LongSymbolsNormalizer::ProcessSymbolAtPosition(VCORE_Reels::Reel_t& reel, s
 
         if (symbol_length != long_symbol.size())
         {
-            const auto index = GetLongSymbolIndex(long_symbol, reel[left_index]);
+            const auto long_symbol_index = GetLongSymbolIndex(long_symbol, reel[left_index]);
 
-            for (int i = static_cast<int>(index); i < static_cast<int>(long_symbol.size()); ++i)
+            for (int i = static_cast<int>(long_symbol_index); i < static_cast<int>(long_symbol.size()); ++i)
             {
                 reel[left_index] = long_symbol[i];
                 ++left_index;
@@ -398,8 +398,8 @@ void LongSymbolsNormalizer::FinalizeTrueRolling(VCORE_Reels::Reel_t& reel) const
     {
         if (!IsAdjacentSymbolPartOfSameLongSymbol(reel, 1, Direction_t::LEFT))
         {
-            const auto index = GetLongSymbolIndex(long_symbol, reel[1]);
-            reel[0] = (index == 0) ? long_symbol.back() : long_symbol[index - 1];
+            const auto long_symbol_index = GetLongSymbolIndex(long_symbol, reel[1]);
+            reel[0] = (long_symbol_index == 0) ? long_symbol.back() : long_symbol[long_symbol_index - 1];
         }
     }
     else if (IsPartOfLongSymbol(reel[0]))
