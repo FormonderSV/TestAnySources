@@ -598,12 +598,12 @@ bool LongSymbolsNormalizer::IsAdjacentSymbolPartOfSameLongSymbol(const VCORE_Ree
 
 VCORE_Figure::Identity_t LongSymbolsNormalizer::GetAdjacentSymbol(const VCORE_Reels::Reel_t& reel, size_t pos, Direction_t direction) const
 {
-    if (direction == Direction_t::LEFT && pos > 0) 
+    if (direction == Direction_t::LEFT && pos > 0)
     {
         return reel[pos - 1];
     }
 
-    if (direction == Direction_t::RIGHT && pos + 1 < reel.size()) 
+    if (direction == Direction_t::RIGHT && pos + 1 < reel.size())
     {
         return reel[pos + 1];
     }
@@ -620,7 +620,7 @@ bool LongSymbolsNormalizer::IsAdjacentSymbolSame(const VCORE_Reels::Reel_t& reel
 size_t LongSymbolsNormalizer::GetSymbolLength(const VCORE_Reels::Reel_t& reel, size_t pos, Direction_t direction) const
 {
     size_t length = 1;
-    while (IsAdjacentSymbolSame(reel, pos, direction) || IsAdjacentSymbolPartOfSameLongSymbol(reel, pos, direction)) 
+    while (IsAdjacentSymbolSame(reel, pos, direction) || IsAdjacentSymbolPartOfSameLongSymbol(reel, pos, direction))
     {
         length++;
         pos += static_cast<int>(direction);
@@ -652,12 +652,19 @@ void LongSymbolsNormalizer::FillLeftEdgeLongSymbol(VCORE_Reels::Reel_t& reel) co
 
         if (IsLongSymbolDefined(original_symbol))
         {
-            const size_t symbol_length = GetSymbolLength(reel, symbol_pos);
-            size_t start_index = symbol_pos == 0 ? std::max(0, static_cast<int>(m_long_symbols.at(original_symbol).size() - symbol_length)) : 0;
+            const size_t current_symbol_length = GetSymbolLength(reel, symbol_pos);
+            const auto& long_symbol_sequence = m_long_symbols.at(original_symbol);
+            const size_t long_symbol_length = long_symbol_sequence.size();
 
-            for (size_t count = 0; count < symbol_length && symbol_pos < reel.size() && start_index < m_long_symbols.at(original_symbol).size(); ++symbol_pos, ++start_index, ++count)
+            size_t start_index = 0;
+            if (symbol_pos == 0)
             {
-                reel[symbol_pos] = m_long_symbols.at(original_symbol).at(start_index);
+                start_index = CalculateStartIndex(current_symbol_length, long_symbol_length);
+            }
+
+            for (size_t count = 0; count < current_symbol_length && symbol_pos < reel.size() && start_index < long_symbol_length; ++count, ++symbol_pos, ++start_index)
+            {
+                reel[symbol_pos] = long_symbol_sequence[start_index];
             }
         }
         else
@@ -665,6 +672,16 @@ void LongSymbolsNormalizer::FillLeftEdgeLongSymbol(VCORE_Reels::Reel_t& reel) co
             ++symbol_pos;
         }
     }
+}
+
+size_t LongSymbolsNormalizer::CalculateStartIndex(size_t current_symbol_length, size_t long_symbol_length) const
+{
+    if (current_symbol_length > long_symbol_length)
+    {
+        return long_symbol_length - (current_symbol_length % long_symbol_length);
+    }
+
+    return std::max(0, static_cast<int>(long_symbol_length - current_symbol_length));
 }
 
 void LongSymbolsNormalizer::FillRightEdgeLongSymbol(VCORE_Reels::Reel_t& reel) const
@@ -683,8 +700,6 @@ void LongSymbolsNormalizer::FillRightEdgeLongSymbol(VCORE_Reels::Reel_t& reel) c
                 reel[symbol_pos] = m_long_symbols.at(original_symbol).at(start_index);
                 start_index = start_index == 0 ? m_long_symbols.at(original_symbol).size() - 1 : start_index - 1;
             }
-
-            symbol_pos -= symbol_length - 1;
         }
         else
         {

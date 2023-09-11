@@ -166,6 +166,8 @@ namespace vcore
 
         void FillLeftEdgeLongSymbol(VCORE_Reels::Reel_t& reel) const;
 
+        size_t CalculateStartIndex(size_t current_symbol_length, size_t long_symbol_length) const;
+
         void FillRightEdgeLongSymbol(VCORE_Reels::Reel_t& reel) const;
 
         bool HasLongSymbolOnReel(const VCORE_Reels::Reel_t& reel) const;
