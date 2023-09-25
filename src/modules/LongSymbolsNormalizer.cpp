@@ -678,7 +678,8 @@ size_t LongSymbolsNormalizer::CalculateStartIndex(size_t current_symbol_length, 
 {
     if (current_symbol_length > long_symbol_length)
     {
-        return long_symbol_length - (current_symbol_length % long_symbol_length);
+        const auto length = long_symbol_length - (current_symbol_length % long_symbol_length);
+        return length == long_symbol_length ? 0 : length;
     }
 
     return std::max(0, static_cast<int>(long_symbol_length - current_symbol_length));
